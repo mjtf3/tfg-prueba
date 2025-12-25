@@ -4,7 +4,7 @@ const { session, githubSignIn, signOut } = useAuth()
 
 <template>
   <div
-    class="flex items-center justify-center min-h-screen bg-gradient-to-br from-amber-50 to-orange-100"
+    class="flex items-center justify-center min-h-screen bg-linear-to-br from-amber-50 to-orange-100"
   >
     <div class="w-full max-w-md">
       <div v-if="!session?.data" class="space-y-6">
@@ -13,7 +13,7 @@ const { session, githubSignIn, signOut } = useAuth()
           <p class="text-gray-600">Sign in to continue</p>
         </div>
         <button
-          class="w-full bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-gray-900 font-semibold py-3 px-4 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+          class="w-full bg-linear-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-gray-900 font-semibold py-3 px-4 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
           @click="githubSignIn()"
         >
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
