@@ -10,4 +10,10 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'bun',
   },
+  runtimeConfig: {
+    // Variables públicas (accesibles en cliente y servidor)
+    public: {
+      authBaseUrl: process.env.NUXT_PUBLIC_AUTH_BASE_URL || 'http://localhost:3000',
+    },
+  },
 })
