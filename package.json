@@ -3,12 +3,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
+    "build": "bun --bun nuxt build",
+    "dev": "bun --bun nuxt dev",
     "drizzle:studio": "drizzle-kit studio",
     "drizzle:push": "drizzle-kit push",
+    "format": "prettier --write .",
     "generate": "nuxt generate",
-    "preview": "nuxt preview",
+    "preview": "bun --bun nuxt preview",
     "postinstall": "nuxt prepare"
   },
   "dependencies": {

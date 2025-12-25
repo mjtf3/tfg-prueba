@@ -20,7 +20,7 @@ export function useAuth() {
   const githubSignIn = () => {
     client.signIn.social({ provider: 'github' })
   }
-  
+
   return {
     session: client.useSession(),
     signOut: client.signOut,
