@@ -13,7 +13,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Variables públicas (accesibles en cliente y servidor)
     public: {
-      authBaseUrl: process.env.NUXT_PUBLIC_AUTH_BASE_URL || 'http://localhost:3000',
+      authBaseUrl: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
     },
   },
 })
