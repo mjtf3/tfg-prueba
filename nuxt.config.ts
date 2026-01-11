@@ -1,5 +1,7 @@
 import tailwindcss from '@tailwindcss/vite'
 // https://nuxt.com/docs/api/configuration/nuxt-config
+
+import env from './server/utils/env'
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -13,7 +15,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Variables públicas (accesibles en cliente y servidor)
     public: {
-      authBaseUrl: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+      authBaseUrl: env.BETTER_AUTH_URL,
     },
   },
 })

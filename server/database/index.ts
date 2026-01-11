@@ -12,6 +12,6 @@ import * as schema from './schemas/index'
 // })
 
 export const db = drizzle({
-  connection: process.env.DATABASE_URL!,
+  connection: env.DATABASE_URL,
   schema,
 })
