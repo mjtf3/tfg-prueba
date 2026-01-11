@@ -18,7 +18,7 @@ export function useAuth() {
   const client = getAuthClient()
 
   const githubSignIn = () => {
-    client.signIn.social({ provider: 'github' })
+    client.signIn.social({ provider: 'github', callbackURL: '/login' })
   }
 
   return {
