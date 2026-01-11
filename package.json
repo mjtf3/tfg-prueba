@@ -15,6 +15,7 @@
     "lint:fix": "oxlint --fix"
   },
   "dependencies": {
+    "@nuxt/icon": "2.2.0",
     "@tailwindcss/vite": "^4.1.18",
     "better-auth": "^1.4.10",
     "drizzle-orm": "^0.45.1",
@@ -30,6 +31,7 @@
     "esbuild"
   ],
   "devDependencies": {
+    "@iconify-json/tabler": "^1.2.26",
     "@types/bun": "^1.3.5",
     "@types/pg": "^8.16.0",
     "drizzle-kit": "^0.31.8",
