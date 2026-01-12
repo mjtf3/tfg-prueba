@@ -21,10 +21,15 @@ export function useAuth() {
     client.signIn.social({ provider: 'github', callbackURL: '/login' })
   }
 
+  const googleSignIn = () => {
+    client.signIn.social({ provider: 'google', callbackURL: '/login' })
+  }
+
   return {
     session: client.useSession(),
     signOut: client.signOut,
     signUp: client.signUp,
     githubSignIn,
+    googleSignIn,
   }
 }
