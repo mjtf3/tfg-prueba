@@ -1,34 +1,83 @@
-import { createAuthClient } from 'better-auth/vue'
+/// Ejemplo sacado de la template nuxthub-better-auth https://github.com/atinux/nuxthub-better-auth
+import { defu } from 'defu'
+import { createAuthClient } from 'better-auth/client'
+import type { InferSessionFromClient, InferUserFromClient, BetterAuthClientOptions } from 'better-auth/client'
+import type { RouteLocationRaw } from 'vue-router'
 
-// Cliente singleton (se crea una sola vez)
-let authClient: ReturnType<typeof createAuthClient> | null = null
-
-function getAuthClient() {
-  if (!authClient) {
-    const config = useRuntimeConfig()
-    authClient = createAuthClient({
-      baseURL: config.public.authBaseUrl as string,
-    })
-  }
-  return authClient
+interface RuntimeAuthConfig {
+  redirectUserTo: RouteLocationRaw | string
+  redirectGuestTo: RouteLocationRaw | string
 }
 
-// Composable principal
 export function useAuth() {
-  const client = getAuthClient()
+  const url = useRequestURL()
+  const headers = import.meta.server ? useRequestHeaders() : undefined
 
-  const githubSignIn = () => {
-    client.signIn.social({ provider: 'github', callbackURL: '/login' })
+  const client = createAuthClient({
+    baseURL: url.origin,
+    fetchOptions: {
+      headers,
+    },
+  })
+
+  const options = defu(useRuntimeConfig().public.auth as Partial<RuntimeAuthConfig>, {
+    redirectUserTo: '/',
+    redirectGuestTo: '/',
+  })
+  const session = useState<InferSessionFromClient<BetterAuthClientOptions> | null>('auth:session', () => null)
+  const user = useState<InferUserFromClient<BetterAuthClientOptions> | null>('auth:user', () => null)
+  const sessionFetching = import.meta.server ? ref(false) : useState('auth:sessionFetching', () => false)
+
+  const fetchSession = async () => {
+    console.log('fetching session...')
+    if (sessionFetching.value) {
+      console.log('already fetching session')
+      return
+    }
+    sessionFetching.value = true
+    const { data } = await client.getSession({
+      fetchOptions: {
+        headers,
+      },
+    })
+    session.value = data?.session || null
+    user.value = data?.user || null
+    sessionFetching.value = false
+    return data
   }
 
+  if (import.meta.client) {
+    client.$store.listen('$sessionSignal', async (signal) => {
+      if (!signal) return
+      await fetchSession()
+    })
+  }
+
+  const githubSignIn = () => {
+    client.signIn.social({ provider: 'github', callbackURL: '/' })
+  }
   const googleSignIn = () => {
-    client.signIn.social({ provider: 'google', callbackURL: '/login' })
+    client.signIn.social({ provider: 'google', callbackURL: '/' })
   }
 
   return {
-    session: client.useSession(),
-    signOut: client.signOut,
+    session,
+    user,
+    loggedIn: computed(() => !!session.value),
+    signIn: client.signIn,
     signUp: client.signUp,
+    async signOut({ redirectTo }: { redirectTo?: RouteLocationRaw } = {}) {
+      const res = await client.signOut()
+      session.value = null
+      user.value = null
+      if (redirectTo) {
+        await navigateTo(redirectTo)
+      }
+      return res
+    },
+    options,
+    fetchSession,
+    client,
     githubSignIn,
     googleSignIn,
   }

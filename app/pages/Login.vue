@@ -11,16 +11,8 @@ const { githubSignIn, googleSignIn } = useAuth()
         <div class="text-center space-y-2">
           <h1 class="text-3xl font-bold text-gray-900">¡Bienvenido!</h1>
         </div>
-        <SocialSignIn
-          nombre="Github"
-          nombre_icono="tabler:brand-github"
-          @inicio_sesion="githubSignIn"
-        />
-        <SocialSignIn
-          nombre="Google"
-          nombre_icono="tabler:brand-google"
-          @inicio_sesion="googleSignIn"
-        />
+        <SocialSignIn nombre="Github" nombre_icono="tabler:brand-github" @inicio_sesion="githubSignIn" />
+        <SocialSignIn nombre="Google" nombre_icono="tabler:brand-google" @inicio_sesion="googleSignIn" />
       </div>
     </div>
   </div>

@@ -7,7 +7,7 @@ const closeDropdown = () => {
   }
 }
 
-const cambio = ref(false)
+const { loggedIn } = useAuth()
 </script>
 
 <template>
@@ -18,8 +18,7 @@ const cambio = ref(false)
       <div class="flex-1">
         <NuxtLink to="/" class="btn btn-ghost text-xl">TFG</NuxtLink>
       </div>
-      <button class="btn mr-4" @click="cambio = !cambio">Toggle</button>
-      <NuxtLink v-if="cambio" to="/login" class="btn text-lg">Iniciar sesión</NuxtLink>
+      <NuxtLink v-if="!loggedIn" to="/login" class="btn text-lg">Iniciar sesión</NuxtLink>
       <div v-else class="flex gap-2">
         <div class="dropdown dropdown-end">
           <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
