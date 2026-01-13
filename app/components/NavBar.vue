@@ -46,8 +46,7 @@ const cambio = ref(false)
               </a>
             </li>
             <li><a>Configuración</a></li>
-            <li><a href="/">Cerrar sesión</a></li>
-            <li><NuxtLink to="/login">Iniciar sesión</NuxtLink></li>
+            <li><NuxtLink to="/">Cerrar sesión</NuxtLink></li>
           </ul>
         </div>
       </div>
