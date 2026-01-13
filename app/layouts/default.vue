@@ -1,6 +1,6 @@
 <template>
   <div>
-    <NavBar class="bg-base-100 shadow-sm" />
+    <NavBar />
     <slot />
   </div>
 </template>

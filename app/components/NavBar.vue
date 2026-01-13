@@ -11,22 +11,18 @@ const cambio = ref(false)
 </script>
 
 <template>
-  <div>
+  <!-- Esto de fondo se colorea y se pone la sombra -->
+  <div class="bg-base-100 shadow-sm">
+    <!-- Luego lo que es la navbar solo ocupa lo que ocupe container -->
     <div class="navbar container mx-auto">
       <div class="flex-1">
         <NuxtLink to="/" class="btn btn-ghost text-xl">TFG</NuxtLink>
       </div>
       <button class="btn mr-4" @click="cambio = !cambio">Toggle</button>
-      <NuxtLink v-if="cambio" to="/login" class="btn text-lg"
-        >Iniciar sesión</NuxtLink
-      >
+      <NuxtLink v-if="cambio" to="/login" class="btn text-lg">Iniciar sesión</NuxtLink>
       <div v-else class="flex gap-2">
         <div class="dropdown dropdown-end">
-          <div
-            tabindex="0"
-            role="button"
-            class="btn btn-ghost btn-circle avatar"
-          >
+          <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
             <div class="w-10 rounded-full">
               <img
                 alt="Tailwind CSS Navbar component"

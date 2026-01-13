@@ -10,7 +10,7 @@ const emits = defineEmits(['inicio_sesion'])
       @click="() => emits('inicio_sesion')"
     >
       <Icon :name="nombre_icono" size="32" />
-      Iniciar sesion con {{ nombre }}
+      Iniciar sesión con {{ nombre }}
     </button>
   </div>
 </template>
