@@ -6,6 +6,8 @@ const closeDropdown = () => {
     elem.blur()
   }
 }
+
+const cambio = ref(false)
 </script>
 
 <template>
@@ -14,7 +16,11 @@ const closeDropdown = () => {
       <div class="flex-1">
         <NuxtLink to="/" class="btn btn-ghost text-xl">TFG</NuxtLink>
       </div>
-      <div class="flex gap-2">
+      <button class="btn mr-4" @click="cambio = !cambio">Toggle</button>
+      <NuxtLink v-if="cambio" to="/login" class="btn text-lg"
+        >Iniciar sesión</NuxtLink
+      >
+      <div v-else class="flex gap-2">
         <div class="dropdown dropdown-end">
           <div
             tabindex="0"
