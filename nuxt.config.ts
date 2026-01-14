@@ -11,9 +11,9 @@ export default defineNuxtConfig({
     plugins: [tailwindcss()],
   },
 
-  nitro: {
-    preset: 'bun',
-  },
+  //   nitro: {
+  //     preset: 'bun',
+  //   },
 
   runtimeConfig: {
     // Variables públicas (accesibles en cliente y servidor)
