@@ -1,4 +1,5 @@
 <script setup>
+const { loggedIn, signOut } = useAuth()
 // Función para quitar el foco del elemento activo (cierra el dropdown)
 const closeDropdown = () => {
   const elem = document.activeElement
@@ -6,8 +7,6 @@ const closeDropdown = () => {
     elem.blur()
   }
 }
-
-const { loggedIn } = useAuth()
 </script>
 
 <template>
@@ -35,16 +34,13 @@ const { loggedIn } = useAuth()
             @click="closeDropdown"
           >
             <li>
-              <a class="justify-between">
-                Perfil
-                <span class="badge">New</span>
-              </a>
+              <a class="justify-between">Perfil</a>
             </li>
-            <li><a>Configuración</a></li>
-            <li><NuxtLink to="/">Cerrar sesión</NuxtLink></li>
+            <li><span @click="signOut">Cerrar sesión</span></li>
           </ul>
         </div>
       </div>
     </div>
+    <div class="divider my-0"></div>
   </div>
 </template>

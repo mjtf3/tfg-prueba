@@ -5,7 +5,7 @@ const { githubSignIn, googleSignIn } = useAuth()
 </script>
 
 <template>
-  <div class="flex items-center justify-center min-h-screen">
+  <div class="flex items-center justify-center">
     <div class="w-full max-w-md bg-gray-200 p-8 rounded-4xl">
       <div class="space-y-6">
         <div class="text-center space-y-2">

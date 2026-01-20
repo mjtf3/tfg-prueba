@@ -1,9 +1,9 @@
 <script setup lang="ts">
-const { signOut, session, loggedIn, user } = useAuth()
+const { signOut, loggedIn, user } = useAuth()
 </script>
 
 <template>
-  <div class="container mx-auto">
+  <!-- <div class="container mx-auto">
     <div class="w-full flex items-center justify-center p-4">
       <h1 class="text-4xl font-bold text-gray-900">Bienvenidos</h1>
     </div>
@@ -19,6 +19,21 @@ const { signOut, session, loggedIn, user } = useAuth()
         No has iniciado sesión. Por favor, inicia sesión para continuar.
       </div>
       <NuxtLink to="/login" class="btn btn-primary mt-4">Iniciar sesión</NuxtLink>
+    </div>
+  </div> -->
+  <div
+    class="hero"
+    style="background-image: url(https://img.daisyui.com/images/stock/photo-1507358522600-9f71e620c44e.webp)"
+  >
+    <div class="hero-content text-center bg-gray-50 rounded-3xl">
+      <div class="max-w-md">
+        <h1 class="text-5xl font-bold">Hello there</h1>
+        <p class="py-6">
+          Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi exercitationem quasi. In deleniti
+          eaque aut repudiandae et a id nisi.
+        </p>
+        <button class="btn btn-primary">Get Started</button>
+      </div>
     </div>
   </div>
 </template>

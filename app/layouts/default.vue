@@ -1,6 +1,6 @@
 <template>
   <div>
     <NavBar />
-    <slot />
+    <slot class="h-full" />
   </div>
 </template>
