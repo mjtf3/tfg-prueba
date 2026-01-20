@@ -21,10 +21,15 @@ const { signOut, loggedIn, user } = useAuth()
       <NuxtLink to="/login" class="btn btn-primary mt-4">Iniciar sesión</NuxtLink>
     </div>
   </div> -->
-  <div
-    class="hero"
-    style="background-image: url(https://img.daisyui.com/images/stock/photo-1507358522600-9f71e620c44e.webp)"
-  >
+  <div class="hero relative">
+    <NuxtImg
+      src="/hero-image.jpg"
+      class="absolute inset-0 w-full h-full object-cover -z-10"
+      alt="Fondo de bienvenida"
+      format="webp"
+      quality="80"
+      sizes="100vw sm:100vw md:100vw lg:100vw"
+    />
     <div class="hero-content text-center bg-gray-50 rounded-3xl">
       <div class="max-w-lg">
         <h1 class="text-5xl font-bold p-2 m-2">¡Bienvenidos a mi app para el TFG!</h1>
