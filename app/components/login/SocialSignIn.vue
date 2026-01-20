@@ -1,16 +1,22 @@
 <script setup lang="ts">
-const props = defineProps(['nombre', 'nombre_icono'])
+const props = defineProps<{
+  nombre: string
+  nombre_icono: string
+  cargando: boolean
+}>()
 const emits = defineEmits(['inicio_sesion'])
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div>
     <button
-      class="w-full bg-linear-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-gray-900 font-semibold py-3 px-4 rounded-lg shadow-lg transition-all duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+      class="btn btn-primary w-full hover:scale-103 transition-transform duration-250 h-auto py-2"
       @click="() => emits('inicio_sesion')"
+      :disabled="cargando"
     >
-      <Icon :name="nombre_icono" size="32" />
-      Iniciar sesión con {{ nombre }}
+      <span class="loading loading-bars loading-xl" v-if="cargando"></span>
+      <Icon :name="nombre_icono" class="min-h-8 min-w-8 mx-2" />
+      <span class="text-xl text-center text-balance">Iniciar sesión con {{ nombre }}</span>
     </button>
   </div>
 </template>

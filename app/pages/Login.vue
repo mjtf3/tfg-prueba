@@ -2,17 +2,35 @@
 import SocialSignIn from '~/components/login/SocialSignIn.vue'
 
 const { githubSignIn, googleSignIn } = useAuth()
+const cargando = ref(false)
+
+function handleInicioSesion(iniciador: () => void) {
+  cargando.value = true
+  iniciador()
+}
 </script>
 
 <template>
   <div class="flex items-center justify-center">
-    <div class="w-full max-w-md bg-gray-200 p-8 rounded-4xl">
-      <div class="space-y-6">
-        <div class="text-center space-y-2">
+    <div class="w-full max-w-md bg-gray-200 p-8 m-4 rounded-4xl">
+      <div class="space-y-12">
+        <div class="text-center">
           <h1 class="text-3xl font-bold text-gray-900">¡Bienvenido!</h1>
         </div>
-        <SocialSignIn nombre="Github" nombre_icono="tabler:brand-github" @inicio_sesion="githubSignIn" />
-        <SocialSignIn nombre="Google" nombre_icono="tabler:brand-google" @inicio_sesion="googleSignIn" />
+        <div class="space-y-6">
+          <SocialSignIn
+            nombre="Github"
+            nombre_icono="tabler:brand-github"
+            :cargando="cargando"
+            @inicio_sesion="handleInicioSesion(githubSignIn)"
+          />
+          <SocialSignIn
+            nombre="Google"
+            nombre_icono="tabler:brand-google"
+            :cargando="cargando"
+            @inicio_sesion="handleInicioSesion(googleSignIn)"
+          />
+        </div>
       </div>
     </div>
   </div>
