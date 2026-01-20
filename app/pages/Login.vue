@@ -19,16 +19,16 @@ function handleInicioSesion(iniciador: () => void) {
         </div>
         <div class="space-y-6">
           <SocialSignIn
-            nombre="Github"
-            nombre_icono="tabler:brand-github"
-            :cargando="cargando"
-            @inicio_sesion="handleInicioSesion(githubSignIn)"
-          />
-          <SocialSignIn
             nombre="Google"
             nombre_icono="tabler:brand-google"
             :cargando="cargando"
             @inicio_sesion="handleInicioSesion(googleSignIn)"
+          />
+          <SocialSignIn
+            nombre="Github"
+            nombre_icono="tabler:brand-github"
+            :cargando="cargando"
+            @inicio_sesion="handleInicioSesion(githubSignIn)"
           />
         </div>
       </div>
