@@ -1,6 +1,9 @@
 <template>
-  <div>
+  <div class="flex flex-col h-full">
     <NavBar />
-    <slot class="h-full" />
+    <div class="flex-1">
+      <!-- Para que expanda lo que tenga -->
+      <slot />
+    </div>
   </div>
 </template>

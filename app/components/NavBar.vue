@@ -1,5 +1,5 @@
 <script setup>
-const { loggedIn, signOut } = useAuth()
+const { loggedIn, signOut, user } = useAuth()
 // Función para quitar el foco del elemento activo (cierra el dropdown)
 const closeDropdown = () => {
   const elem = document.activeElement
@@ -11,7 +11,7 @@ const closeDropdown = () => {
 
 <template>
   <!-- Esto de fondo se colorea y se pone la sombra -->
-  <div class="bg-base-100 shadow-sm">
+  <div class="bg-base-100 shadow-md border-b border-gray-400">
     <!-- Luego lo que es la navbar solo ocupa lo que ocupe container -->
     <div class="navbar container mx-auto">
       <div class="flex-1">
@@ -24,7 +24,7 @@ const closeDropdown = () => {
             <div class="w-10 rounded-full">
               <img
                 alt="Tailwind CSS Navbar component"
-                src="https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp"
+                :src="user.image || 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'"
               />
             </div>
           </div>
@@ -41,6 +41,5 @@ const closeDropdown = () => {
         </div>
       </div>
     </div>
-    <div class="divider my-0"></div>
   </div>
 </template>
