@@ -3,13 +3,13 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "bun --bun nuxt build",
-    "dev": "bun --bun nuxt dev",
+    "build": "nuxt build",
+    "dev": "nuxt dev",
     "drizzle:studio": "drizzle-kit studio",
     "drizzle:push": "drizzle-kit push",
     "format": "prettier --write .",
     "generate": "nuxt generate",
-    "preview": "bun --bun nuxt preview",
+    "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix"

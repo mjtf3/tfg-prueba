@@ -2,6 +2,12 @@ import { z } from 'zod'
 
 import tryParseEnv from '../lib/try-parse-env'
 
+// Polyfill para Vercel (Preview & Producción)
+// Si no hay BETTER_AUTH_URL pero existe VERCEL_URL, la construimos automáticamente.
+if (!process.env.BETTER_AUTH_URL && process.env.VERCEL_URL) {
+  process.env.BETTER_AUTH_URL = `https://${process.env.VERCEL_URL}`
+}
+
 const EnvSchema = z.object({
   NODE_ENV: z.string().nonempty(),
   DATABASE_URL: z.string().nonempty(),
