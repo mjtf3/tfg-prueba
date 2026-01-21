@@ -21,11 +21,9 @@ const closeDropdown = () => {
       <div v-else class="flex gap-2">
         <div class="dropdown dropdown-end">
           <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
-            <div class="w-10 rounded-full">
-              <img
-                alt="Tailwind CSS Navbar component"
-                :src="user.image || 'https://img.daisyui.com/images/stock/photo-1534528741775-53994a69daeb.webp'"
-              />
+            <div class="w-10 rounded-full flex justify-center">
+              <img v-if="user.image" :src="user.image" alt="Tailwind CSS Navbar component" />
+              <Icon v-else name="tabler:user" size="32" class="m-auto" />
             </div>
           </div>
           <ul
