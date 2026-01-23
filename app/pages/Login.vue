@@ -2,10 +2,10 @@
 import SocialSignIn from '~/components/login/SocialSignIn.vue'
 
 const { githubSignIn, googleSignIn } = useAuth()
-const cargando = ref(false)
+const deshabilitado = ref(false)
 
 function handleInicioSesion(iniciador: () => void) {
-  cargando.value = true
+  deshabilitado.value = true
   iniciador()
 }
 </script>
@@ -21,13 +21,13 @@ function handleInicioSesion(iniciador: () => void) {
           <SocialSignIn
             nombre="Google"
             nombre_icono="tabler:brand-google"
-            :cargando="cargando"
+            :deshabilitado="deshabilitado"
             @inicio_sesion="handleInicioSesion(googleSignIn)"
           />
           <SocialSignIn
             nombre="Github"
             nombre_icono="tabler:brand-github"
-            :cargando="cargando"
+            :deshabilitado="deshabilitado"
             @inicio_sesion="handleInicioSesion(githubSignIn)"
           />
         </div>
