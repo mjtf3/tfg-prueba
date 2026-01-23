@@ -3,18 +3,20 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "bun --bun nuxt build",
-    "dev": "bun --bun nuxt dev",
+    "build": "nuxt build",
+    "dev": "nuxt dev",
     "drizzle:studio": "drizzle-kit studio",
     "drizzle:push": "drizzle-kit push",
     "format": "prettier --write .",
     "generate": "nuxt generate",
-    "preview": "bun --bun nuxt preview",
+    "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix"
   },
   "dependencies": {
+    "@nuxt/icon": "2.2.0",
+    "@nuxt/image": "2.0.0",
     "@tailwindcss/vite": "^4.1.18",
     "better-auth": "^1.4.10",
     "drizzle-orm": "^0.45.1",
@@ -30,10 +32,12 @@
     "esbuild"
   ],
   "devDependencies": {
+    "@iconify-json/tabler": "^1.2.26",
     "@types/bun": "^1.3.5",
     "@types/pg": "^8.16.0",
+    "daisyui": "^5.5.14",
     "drizzle-kit": "^0.31.8",
-    "oxlint": "^1.38.0",
+    "oxlint": "^1.39.0",
     "prettier": "^3.7.4"
   }
 }

@@ -1,1 +1,10 @@
 @import 'tailwindcss';
+@plugin "daisyui" {
+  themes: light --default;
+}
+
+html,
+body,
+#__nuxt {
+  height: 100%;
+}
