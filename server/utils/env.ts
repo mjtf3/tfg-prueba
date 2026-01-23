@@ -6,7 +6,7 @@ import tryParseEnv from '../lib/try-parse-env'
 // Si no hay BETTER_AUTH_URL pero existe VERCEL_URL, la construimos automáticamente.
 if (!process.env.BETTER_AUTH_URL && process.env.VERCEL_URL) {
   const finalUrl = `https://${process.env.VERCEL_URL}`
-  console.log('Building BETTER_AUTH_URL from VERCEL_URL:', finalUrl)
+  console.debug('Building BETTER_AUTH_URL from VERCEL_URL:', finalUrl)
   process.env.BETTER_AUTH_URL = finalUrl
 }
 

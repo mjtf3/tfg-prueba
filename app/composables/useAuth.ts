@@ -29,9 +29,9 @@ export function useAuth() {
   const sessionFetching = import.meta.server ? ref(false) : useState('auth:sessionFetching', () => false)
 
   const fetchSession = async () => {
-    console.log('fetching session...')
+    console.debug('fetching session...')
     if (sessionFetching.value) {
-      console.log('already fetching session')
+      console.debug('already fetching session')
       return
     }
     sessionFetching.value = true
