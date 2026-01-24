@@ -1,13 +1,7 @@
 /// Ejemplo sacado de la template nuxthub-better-auth https://github.com/atinux/nuxthub-better-auth
-import { defu } from 'defu'
 import { createAuthClient } from 'better-auth/client'
 import type { InferSessionFromClient, InferUserFromClient, BetterAuthClientOptions } from 'better-auth/client'
 import type { RouteLocationRaw } from 'vue-router'
-
-interface RuntimeAuthConfig {
-  redirectUserTo: RouteLocationRaw | string
-  redirectGuestTo: RouteLocationRaw | string
-}
 
 export function useAuth() {
   const url = useRequestURL()
@@ -20,18 +14,15 @@ export function useAuth() {
     },
   })
 
-  const options = defu(useRuntimeConfig().public.auth as Partial<RuntimeAuthConfig>, {
-    redirectUserTo: '/',
-    redirectGuestTo: '/',
-  })
+  const options = { redirectUserTo: '/dashboard', redirectGuestTo: '/login' }
   const session = useState<InferSessionFromClient<BetterAuthClientOptions> | null>('auth:session', () => null)
   const user = useState<InferUserFromClient<BetterAuthClientOptions> | null>('auth:user', () => null)
   const sessionFetching = import.meta.server ? ref(false) : useState('auth:sessionFetching', () => false)
 
   const fetchSession = async () => {
-    console.debug('fetching session...')
+    console.log('fetching session...')
     if (sessionFetching.value) {
-      console.debug('already fetching session')
+      console.log('already fetching session')
       return
     }
     sessionFetching.value = true
@@ -54,10 +45,10 @@ export function useAuth() {
   }
 
   const githubSignIn = () => {
-    client.signIn.social({ provider: 'github', callbackURL: '/' })
+    client.signIn.social({ provider: 'github', callbackURL: options.redirectUserTo })
   }
   const googleSignIn = () => {
-    client.signIn.social({ provider: 'google', callbackURL: '/' })
+    client.signIn.social({ provider: 'google', callbackURL: options.redirectUserTo })
   }
 
   return {

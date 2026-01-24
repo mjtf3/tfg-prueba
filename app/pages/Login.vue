@@ -1,4 +1,7 @@
 <script setup lang="ts">
+definePageMeta({
+  auth: {only: 'guest'}
+})
 import SocialSignIn from '~/components/login/SocialSignIn.vue'
 
 const { githubSignIn, googleSignIn } = useAuth()

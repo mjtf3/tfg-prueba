@@ -34,7 +34,7 @@ const closeDropdown = () => {
             <li>
               <a class="justify-between">Perfil</a>
             </li>
-            <li><span @click="signOut">Cerrar sesión</span></li>
+            <li><span @click="signOut({ redirectTo: '/' })">Cerrar sesión</span></li>
           </ul>
         </div>
       </div>
