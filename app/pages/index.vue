@@ -21,7 +21,8 @@ definePageMeta({
         <p class="py-6 text-2xl">
           {{ user ? `Hola ${user.name}` : 'Por favor, inicia sesión para continuar.' }}
         </p>
-        <NuxtLink to="/login" class="btn btn-primary">Inicia sesión</NuxtLink>
+        <NuxtLink v-if="!user" to="/login" class="btn btn-primary">Inicia sesión</NuxtLink>
+        <NuxtLink v-else to="/dashboard" class="btn btn-primary">Ir a la dashboard</NuxtLink>
       </div>
     </div>
   </div>

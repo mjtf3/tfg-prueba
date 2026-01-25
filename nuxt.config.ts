@@ -11,6 +11,10 @@ export default defineNuxtConfig({
     plugins: [tailwindcss()],
   },
 
+  routeRules: {
+    '/dashboard/**': { appLayout: 'dashboard' },
+  },
+
   nitro: {
     // preset: 'bun',
   },
