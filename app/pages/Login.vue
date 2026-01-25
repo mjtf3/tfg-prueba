@@ -1,6 +1,6 @@
 <script setup lang="ts">
 definePageMeta({
-  auth: {only: 'guest'}
+  auth: { only: 'guest' },
 })
 import SocialSignIn from '~/components/login/SocialSignIn.vue'
 

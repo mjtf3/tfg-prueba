@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { user } = useAuth()
 definePageMeta({
-  auth: false
+  auth: false,
 })
 </script>
 
