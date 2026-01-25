@@ -1,5 +1,8 @@
 <template>
   <NuxtLayout name="default">
-    <slot />
+    <div class="flex h-full">
+      <dashboard-sidebar />
+      <NuxtPage class="p-4" />
+    </div>
   </NuxtLayout>
 </template>

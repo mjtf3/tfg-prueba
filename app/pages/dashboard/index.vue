@@ -4,8 +4,8 @@ const { user } = useAuth()
 
 <template>
   <div>
-    <h1>Dashboard</h1>
-    <p>Welcome, {{ user?.name }}</p>
-    <NuxtLink to="/dashboard/pagina1">Pagina 1</NuxtLink>
+    <h1 class="text-2xl font-bold">Dashboard</h1>
+    <p>Bienvenido/a, {{ user?.name }}</p>
+    <p>Esta es la página pricipal del dashboard</p>
   </div>
 </template>
