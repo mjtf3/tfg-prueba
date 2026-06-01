@@ -15,10 +15,6 @@ export default defineNuxtConfig({
     '/dashboard/**': { appLayout: 'dashboard' },
   },
 
-  nitro: {
-    // preset: 'bun',
-  },
-
   runtimeConfig: {
     // Variables públicas (accesibles en cliente y servidor)
     public: {
