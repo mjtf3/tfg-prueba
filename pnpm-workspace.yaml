@@ -2,3 +2,5 @@ allowBuilds:
   '@parcel/watcher': true
   esbuild: true
   sharp: true
+overrides:
+  vite: ^8.0.13
