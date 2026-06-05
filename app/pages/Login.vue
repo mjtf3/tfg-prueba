@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import SocialSignIn from '~/components/login/SocialSignIn.vue'
+
 definePageMeta({
   auth: { only: 'guest' },
 })
-import SocialSignIn from '~/components/login/SocialSignIn.vue'
 
 const { githubSignIn, googleSignIn, signIn, options } = useAuth()
 const deshabilitado = ref(false)
