@@ -1,34 +1,32 @@
 <script setup lang="ts">
-import SocialSignIn from '~/components/login/SocialSignIn.vue'
-
 definePageMeta({
   auth: { only: 'guest' },
 })
 
-const { githubSignIn, googleSignIn, signIn, options } = useAuth()
+const { signUp, options } = useAuth()
 const deshabilitado = ref(false)
+const cargandoRegistro = ref(false)
+const nombre = ref('')
 const email = ref('')
 const contrasena = ref('')
-const errorLogin = ref('')
+const errorRegistro = ref('')
 
-function handleInicioSesion(iniciador: () => void) {
+async function handleRegistroEmail() {
+  errorRegistro.value = ''
   deshabilitado.value = true
-  iniciador()
-}
+  cargandoRegistro.value = true
 
-async function handleLoginEmail() {
-  errorLogin.value = ''
-  deshabilitado.value = true
-
-  const { error } = await signIn.email({
+  const { error } = await signUp.email({
+    name: nombre.value,
     email: email.value,
     password: contrasena.value,
     callbackURL: options.redirectUserTo,
   })
 
   if (error) {
-    errorLogin.value = error.message || 'No se pudo iniciar sesión'
+    errorRegistro.value = error.message || 'No se pudo completar el registro'
     deshabilitado.value = false
+    cargandoRegistro.value = false
     return
   }
 
@@ -41,9 +39,18 @@ async function handleLoginEmail() {
     <div class="w-full max-w-md bg-gray-200 p-8 m-4 rounded-4xl">
       <div class="space-y-12">
         <div class="text-center">
-          <h1 class="text-3xl font-bold text-gray-900">Iniciar sesión</h1>
+          <h1 class="text-3xl font-bold text-gray-900">Crear cuenta</h1>
         </div>
-        <form class="space-y-4" @submit.prevent="handleLoginEmail">
+        <form class="space-y-4" @submit.prevent="handleRegistroEmail">
+          <input
+            v-model="nombre"
+            class="input input-bordered w-full"
+            type="text"
+            autocomplete="name"
+            placeholder="Nombre"
+            :disabled="deshabilitado"
+            required
+          />
           <input
             v-model="email"
             class="input input-bordered w-full"
@@ -57,35 +64,22 @@ async function handleLoginEmail() {
             v-model="contrasena"
             class="input input-bordered w-full"
             type="password"
-            autocomplete="current-password"
+            autocomplete="new-password"
             placeholder="Contraseña"
             minlength="8"
             :disabled="deshabilitado"
             required
           />
-          <p v-if="errorLogin" class="text-error text-sm">{{ errorLogin }}</p>
+          <p v-if="errorRegistro" class="text-error text-sm">{{ errorRegistro }}</p>
           <button class="btn btn-primary w-full" type="submit" :disabled="deshabilitado">
-            <span>Iniciar sesión</span>
+            <span v-if="cargandoRegistro" class="loading loading-bars"></span>
+            <span>Registrarse</span>
           </button>
           <p class="text-center text-sm text-gray-700">
-            ¿No tienes cuenta?
-            <NuxtLink class="link link-primary" to="/register">Regístrate</NuxtLink>
+            ¿Ya tienes cuenta?
+            <NuxtLink class="link link-primary" to="/login">Inicia sesión</NuxtLink>
           </p>
         </form>
-        <div class="space-y-6">
-          <SocialSignIn
-            nombre="Google"
-            nombre_icono="tabler:brand-google"
-            :deshabilitado="deshabilitado"
-            @inicio_sesion="handleInicioSesion(googleSignIn)"
-          />
-          <SocialSignIn
-            nombre="Github"
-            nombre_icono="tabler:brand-github"
-            :deshabilitado="deshabilitado"
-            @inicio_sesion="handleInicioSesion(githubSignIn)"
-          />
-        </div>
       </div>
     </div>
   </div>
