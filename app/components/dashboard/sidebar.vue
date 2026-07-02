@@ -8,10 +8,11 @@ const role = computed(() => user.value?.role)
     <li class="menu-title">{{ role === 'oficina' ? 'Oficina / gerencia' : 'Operario de almacén' }}</li>
     <li><NuxtLink to="/dashboard">Dashboard</NuxtLink></li>
     <li v-if="role === 'oficina'"><NuxtLink to="/dashboard/recolecciones">Recolecciones</NuxtLink></li>
+    <li v-if="role === 'oficina'"><NuxtLink to="/dashboard/lotes">Lotes</NuxtLink></li>
+    <li v-if="role === 'oficina'"><NuxtLink to="/dashboard/ventas">Ventas</NuxtLink></li>
     <li><NuxtLink to="/dashboard/escaneo">Escaneo</NuxtLink></li>
     <!--
       Enlaces por rol pendientes de sprints siguientes:
-        oficina  -> Lotes y Ventas (S6), Informes (S7)
         ambos    -> Trazabilidad (S7)
     -->
   </ul>
