@@ -41,8 +41,7 @@ async function submit() {
     form.precioVenta = null
     await refresh()
   } catch (e) {
-    const err = e as { data?: { statusMessage?: string }; statusMessage?: string }
-    error.value = err?.data?.statusMessage || err?.statusMessage || 'No se pudo registrar la venta'
+    error.value = mensajeDe(e, 'No se pudo registrar la venta')
   } finally {
     saving.value = false
   }
