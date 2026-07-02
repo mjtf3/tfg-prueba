@@ -30,8 +30,7 @@ async function addCaja() {
     cajaCodigo.value = ''
     await refresh()
   } catch (e) {
-    const err = e as { data?: { statusMessage?: string }; statusMessage?: string }
-    cajaError.value = err?.data?.statusMessage || err?.statusMessage || 'No se pudo crear la caja'
+    cajaError.value = mensajeDe(e, 'No se pudo crear la caja')
   } finally {
     guardandoCaja.value = false
   }

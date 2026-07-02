@@ -66,8 +66,7 @@ async function submit() {
     })
     await router.push(`/dashboard/lotes/${l.id}`)
   } catch (e) {
-    const err = e as { data?: { statusMessage?: string }; statusMessage?: string }
-    error.value = err?.data?.statusMessage || err?.statusMessage || 'No se pudo crear el lote'
+    error.value = mensajeDe(e, 'No se pudo crear el lote')
   } finally {
     saving.value = false
   }

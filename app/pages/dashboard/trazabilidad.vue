@@ -32,10 +32,9 @@ async function consultar(code?: string) {
   cargando.value = true
   try {
     resultado.value = await $fetch(`/api/trazabilidad/${encodeURIComponent(q)}`)
-  } catch (e: unknown) {
-    const status = (e as { statusCode?: number })?.statusCode
+  } catch (e) {
     error.value =
-      status === 404
+      estadoDe(e) === 404
         ? 'No se encontró ningún palé con ese código.'
         : 'Error al consultar la trazabilidad. Inténtalo de nuevo.'
   } finally {

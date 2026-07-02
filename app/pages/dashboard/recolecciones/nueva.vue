@@ -104,8 +104,7 @@ async function submit() {
     const rec = await $fetch<{ id: number }>('/api/recolecciones', { method: 'POST', body: payload })
     await router.push(`/dashboard/recolecciones/${rec.id}`)
   } catch (e) {
-    const err = e as { data?: { statusMessage?: string }; statusMessage?: string }
-    error.value = err?.data?.statusMessage || err?.statusMessage || 'No se pudo crear la recolección'
+    error.value = mensajeDe(e, 'No se pudo crear la recolección')
   } finally {
     saving.value = false
   }
