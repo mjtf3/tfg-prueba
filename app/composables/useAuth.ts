@@ -1,5 +1,6 @@
 /// Ejemplo sacado de la template nuxthub-better-auth https://github.com/atinux/nuxthub-better-auth
 import { createAuthClient } from 'better-auth/client'
+import { inferAdditionalFields } from 'better-auth/client/plugins'
 import type { InferSessionFromClient, InferUserFromClient, BetterAuthClientOptions } from 'better-auth/client'
 import type { RouteLocationRaw } from 'vue-router'
 
@@ -12,6 +13,8 @@ export function useAuth() {
     fetchOptions: {
       headers,
     },
+    // Expone el campo `role` (additionalFields del servidor) en la sesión del cliente.
+    plugins: [inferAdditionalFields({ user: { role: { type: 'string' } } })],
   })
 
   const options = { redirectUserTo: '/dashboard', redirectGuestTo: '/login' }

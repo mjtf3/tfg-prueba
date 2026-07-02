@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from '../database/index'
+import env from './env'
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -8,6 +9,16 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+  },
+  user: {
+    additionalFields: {
+      role: {
+        type: ['oficina', 'operario'],
+        required: false,
+        defaultValue: 'operario',
+        input: false, // el rol no se asigna en el registro
+      },
+    },
   },
   socialProviders: {
     github: {
