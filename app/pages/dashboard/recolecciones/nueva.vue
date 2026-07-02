@@ -17,6 +17,7 @@ const { data: proveedores } = await useFetch<Catalogo[]>('/api/catalogos/proveed
 
 const parcelas = ref<Catalogo[]>([])
 const recintos = ref<Catalogo[]>([])
+const error = ref('')
 
 const form = reactive({
   tipo: 'propio' as 'propio' | 'comprado',
@@ -41,7 +42,16 @@ watch(
     form.parcelaId = null
     form.recintoId = null
     recintos.value = []
-    parcelas.value = id ? await $fetch('/api/catalogos/parcelas', { query: { puebloId: id } }) : []
+    if (!id) {
+      parcelas.value = []
+      return
+    }
+    try {
+      parcelas.value = await $fetch('/api/catalogos/parcelas', { query: { puebloId: id } })
+    } catch {
+      parcelas.value = []
+      error.value = 'No se pudieron cargar las parcelas. Revisa la conexión e inténtalo de nuevo.'
+    }
   }
 )
 
@@ -49,7 +59,16 @@ watch(
   () => form.parcelaId,
   async (id) => {
     form.recintoId = null
-    recintos.value = id ? await $fetch('/api/catalogos/recintos', { query: { parcelaId: id } }) : []
+    if (!id) {
+      recintos.value = []
+      return
+    }
+    try {
+      recintos.value = await $fetch('/api/catalogos/recintos', { query: { parcelaId: id } })
+    } catch {
+      recintos.value = []
+      error.value = 'No se pudieron cargar los recintos. Revisa la conexión e inténtalo de nuevo.'
+    }
   }
 )
 
@@ -61,7 +80,6 @@ function removePale(i: number) {
 }
 
 const saving = ref(false)
-const error = ref('')
 
 async function submit() {
   error.value = ''
