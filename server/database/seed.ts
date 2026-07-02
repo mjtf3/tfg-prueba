@@ -33,49 +33,43 @@ async function seedCatalogos() {
 
   console.log('Poblando catálogos...')
 
-  await db
-    .insert(pueblo)
-    .values([
+  // Transacción: si algo falla a mitad, se revierte todo y el seed sigue siendo
+  // re-ejecutable (el guard de arriba volverá a ver las tablas vacías).
+  await db.transaction(async (tx) => {
+    await tx.insert(pueblo).values([
       { codigo: '01', nombre: 'Villena' },
       { codigo: '02', nombre: 'Sax' },
     ])
-    .onConflictDoNothing()
-  const pueblos = await db.select().from(pueblo)
-  const puebloId = (codigo: string) => pueblos.find((p) => p.codigo === codigo)!.id
+    const pueblos = await tx.select().from(pueblo)
+    const puebloId = (codigo: string) => pueblos.find((p) => p.codigo === codigo)!.id
 
-  await db.insert(parcela).values([
-    { codigo: '10', nombre: 'La Vega', puebloId: puebloId('01') },
-    { codigo: '11', nombre: 'El Llano', puebloId: puebloId('01') },
-    { codigo: '20', nombre: 'Camino Alto', puebloId: puebloId('02') },
-  ])
-  const parcelas = await db.select().from(parcela)
-  const parcelaId = (codigo: string) => parcelas.find((p) => p.codigo === codigo)!.id
+    await tx.insert(parcela).values([
+      { codigo: '10', nombre: 'La Vega', puebloId: puebloId('01') },
+      { codigo: '11', nombre: 'El Llano', puebloId: puebloId('01') },
+      { codigo: '20', nombre: 'Camino Alto', puebloId: puebloId('02') },
+    ])
+    const parcelas = await tx.select().from(parcela)
+    const parcelaId = (codigo: string) => parcelas.find((p) => p.codigo === codigo)!.id
 
-  await db.insert(recinto).values([
-    { codigo: '100', parcelaId: parcelaId('10') },
-    { codigo: '101', parcelaId: parcelaId('10') },
-    { codigo: '110', parcelaId: parcelaId('11') },
-  ])
+    await tx.insert(recinto).values([
+      { codigo: '100', parcelaId: parcelaId('10') },
+      { codigo: '101', parcelaId: parcelaId('10') },
+      { codigo: '110', parcelaId: parcelaId('11') },
+    ])
 
-  await db
-    .insert(finca)
-    .values([{ nombre: 'CANARIO' }, { nombre: 'EL PRADO' }])
-    .onConflictDoNothing()
+    await tx.insert(finca).values([{ nombre: 'CANARIO' }, { nombre: 'EL PRADO' }])
 
-  await db
-    .insert(producto)
-    .values([{ nombre: 'COLIFLOR MORADA' }, { nombre: 'BRÓCOLI' }, { nombre: 'ALCACHOFA' }])
-    .onConflictDoNothing()
+    await tx
+      .insert(producto)
+      .values([{ nombre: 'COLIFLOR MORADA' }, { nombre: 'BRÓCOLI' }, { nombre: 'ALCACHOFA' }])
 
-  await db
-    .insert(categoria)
-    .values([{ nombre: 'CAT I' }, { nombre: 'CAT II' }])
-    .onConflictDoNothing()
+    await tx.insert(categoria).values([{ nombre: 'CAT I' }, { nombre: 'CAT II' }])
 
-  await db.insert(proveedor).values([
-    { nombre: 'Hortícolas del Sur', nif: 'B12345678' },
-    { nombre: 'Cooperativa Vecina', nif: 'F87654321' },
-  ])
+    await tx.insert(proveedor).values([
+      { nombre: 'Hortícolas del Sur', nif: 'B12345678' },
+      { nombre: 'Cooperativa Vecina', nif: 'F87654321' },
+    ])
+  })
 
   console.log('Catálogos poblados.')
 }
