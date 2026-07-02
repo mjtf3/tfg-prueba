@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'oficina' })
 
-const { data, pending } = await useFetch('/api/informes')
+const { data, pending, error } = await useFetch('/api/informes')
 </script>
 
 <template>
@@ -9,6 +9,11 @@ const { data, pending } = await useFetch('/api/informes')
     <h1 class="text-2xl font-bold mb-4">Informes</h1>
 
     <div v-if="pending" class="flex justify-center p-8"><span class="loading loading-spinner" /></div>
+
+    <div v-else-if="error" class="alert alert-error">
+      <Icon name="tabler:alert-triangle" />
+      <span>No se pudieron cargar los informes. Inténtalo de nuevo.</span>
+    </div>
 
     <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div>
