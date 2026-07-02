@@ -1,5 +1,8 @@
 import { relations } from 'drizzle-orm'
-import { pgTable, text, timestamp, boolean, index } from 'drizzle-orm/pg-core'
+import { pgTable, pgEnum, text, timestamp, boolean, index } from 'drizzle-orm/pg-core'
+
+/** Perfiles de usuario: oficina/gerencia y operario de almacén. */
+export const userRole = pgEnum('user_role', ['oficina', 'operario'])
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -7,6 +10,9 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').default(false).notNull(),
   image: text('image'),
+  // Control de acceso basado en roles (añadido para la trazabilidad).
+  // Requiere declarar este campo en `additionalFields` de better-auth.
+  role: userRole('role').default('operario').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()

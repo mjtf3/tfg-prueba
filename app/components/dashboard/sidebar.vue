@@ -1,6 +1,17 @@
+<script setup lang="ts">
+const { user } = useAuth()
+const role = computed(() => user.value?.role)
+</script>
+
 <template>
   <ul class="menu bg-base-200 w-60 p-4 h-full shadow-md">
+    <li class="menu-title">{{ role === 'oficina' ? 'Oficina / gerencia' : 'Operario de almacén' }}</li>
     <li><NuxtLink to="/dashboard">Dashboard</NuxtLink></li>
-    <li><NuxtLink to="/dashboard/pagina1">Pagina 1</NuxtLink></li>
+    <!--
+      Los enlaces por rol se irán añadiendo en los siguientes sprints:
+        oficina  -> Recolecciones (S4), Lotes y Ventas (S6), Informes (S7)
+        operario -> Escaneo (S5)
+        ambos    -> Trazabilidad (S7)
+    -->
   </ul>
 </template>

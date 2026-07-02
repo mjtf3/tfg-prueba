@@ -1,2 +1,2 @@
 export * from './auth-schema'
-export * from './mySchemas'
+export * from './trazabilidad-schema'
