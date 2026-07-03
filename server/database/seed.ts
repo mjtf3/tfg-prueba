@@ -1,15 +1,15 @@
 import process from 'node:process'
 import { eq } from 'drizzle-orm'
 import { db } from './index'
-import { auth } from '../utils/auth'
+import { crearUsuario } from '../utils/crear-usuario'
 import { pueblo, parcela, recinto, finca, producto, categoria, proveedor, user } from './schemas/index'
 
 /**
  * Seed de desarrollo: puebla los catálogos (datos maestros) con datos de ejemplo
  * y crea un usuario inicial con rol `oficina` para poder operar la aplicación.
  *
- * Es necesario porque el registro de better-auth crea siempre usuarios `operario`
- * (`role.input = false`), por lo que no habría forma de obtener el primer `oficina`.
+ * Es necesario porque el registro público está deshabilitado y las cuentas las
+ * crea la oficina; el primer usuario `oficina` debe crearse aquí para el arranque.
  *
  * Ejecutar con: `pnpm db:seed` (arranca antes la BD con docker compose).
  */
@@ -76,16 +76,14 @@ async function seedCatalogos() {
 
 async function seedOficina() {
   const [existente] = await db.select().from(user).where(eq(user.email, OFICINA.email)).limit(1)
-
-  if (!existente) {
-    console.log(`Creando usuario ${OFICINA.email}...`)
-    await auth.api.signUpEmail({
-      body: { email: OFICINA.email, password: OFICINA.password, name: OFICINA.name },
-    })
+  if (existente) {
+    console.log(`Usuario ${OFICINA.email} ya existe.`)
+    return
   }
 
-  // El rol no se puede fijar en el registro (input:false), se promociona aquí.
-  await db.update(user).set({ role: 'oficina' }).where(eq(user.email, OFICINA.email))
+  // Con el registro público deshabilitado, el primer oficina se crea aquí con el
+  // mismo helper que usa el alta desde la aplicación.
+  await crearUsuario({ name: OFICINA.name, email: OFICINA.email, password: OFICINA.password, role: 'oficina' })
   console.log(`Usuario ${OFICINA.email} con rol oficina listo.`)
 }
 

@@ -15,10 +15,6 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().nonempty(),
   BETTER_AUTH_SECRET: z.string().nonempty(),
   BETTER_AUTH_URL: z.string().nonempty(),
-  GITHUB_CLIENT_ID: z.string().nonempty(),
-  GITHUB_CLIENT_SECRET: z.string().nonempty(),
-  GOOGLE_CLIENT_ID: z.string().nonempty(),
-  GOOGLE_CLIENT_SECRET: z.string().nonempty(),
 })
 
 export type EnvSchema = z.infer<typeof EnvSchema>
