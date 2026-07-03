@@ -2,6 +2,7 @@
 definePageMeta({ middleware: 'oficina' })
 
 const { data: usuarios, refresh } = await useFetch('/api/usuarios')
+const { user: usuarioActual } = useAuth()
 
 const form = reactive({
   name: '',
@@ -12,6 +13,19 @@ const form = reactive({
 const saving = ref(false)
 const error = ref('')
 const ok = ref('')
+
+async function eliminar(u: { id: string; email: string }) {
+  if (!confirm(`¿Eliminar al usuario ${u.email}?`)) return
+  error.value = ''
+  ok.value = ''
+  try {
+    await $fetch(`/api/usuarios/${u.id}`, { method: 'DELETE' })
+    ok.value = `Usuario ${u.email} eliminado.`
+    await refresh()
+  } catch (e) {
+    error.value = mensajeDe(e, 'No se pudo eliminar el usuario')
+  }
+}
 
 async function submit() {
   error.value = ''
@@ -76,7 +90,7 @@ async function submit() {
       <div v-else class="overflow-x-auto">
         <table class="table table-zebra">
           <thead>
-            <tr><th>Nombre</th><th>Correo</th><th>Rol</th></tr>
+            <tr><th>Nombre</th><th>Correo</th><th>Rol</th><th></th></tr>
           </thead>
           <tbody>
             <tr v-for="u in usuarios" :key="u.id" class="hover">
@@ -84,6 +98,16 @@ async function submit() {
               <td>{{ u.email }}</td>
               <td>
                 <span class="badge" :class="u.role === 'oficina' ? 'badge-primary' : 'badge-ghost'">{{ u.role }}</span>
+              </td>
+              <td class="text-right">
+                <button
+                  v-if="u.id !== usuarioActual?.id"
+                  class="btn btn-ghost btn-xs text-error"
+                  @click="eliminar(u)"
+                >
+                  <Icon name="tabler:trash" /> Eliminar
+                </button>
+                <span v-else class="text-xs opacity-50">(tú)</span>
               </td>
             </tr>
           </tbody>
