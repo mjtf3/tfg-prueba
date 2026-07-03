@@ -1,14 +1,15 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { db } from '../database/index'
-import env from './env'
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: 'pg', // or "pg" or "mysql"
+    provider: 'pg',
   }),
   emailAndPassword: {
     enabled: true,
+    // El registro público está deshabilitado: las cuentas las crea el rol oficina.
+    disableSignUp: true,
   },
   user: {
     additionalFields: {
@@ -16,20 +17,8 @@ export const auth = betterAuth({
         type: ['oficina', 'operario'],
         required: false,
         defaultValue: 'operario',
-        input: false, // el rol no se asigna en el registro
+        input: false, // el rol lo asigna la oficina al crear el usuario
       },
-    },
-  },
-  socialProviders: {
-    github: {
-      enabled: true,
-      clientId: env.GITHUB_CLIENT_ID,
-      clientSecret: env.GITHUB_CLIENT_SECRET,
-    },
-    google: {
-      enabled: true,
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
     },
   },
 })

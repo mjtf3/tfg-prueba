@@ -1,20 +1,13 @@
 <script setup lang="ts">
-import SocialSignIn from '~/components/login/SocialSignIn.vue'
-
 definePageMeta({
   auth: { only: 'guest' },
 })
 
-const { githubSignIn, googleSignIn, signIn, options } = useAuth()
+const { signIn, options } = useAuth()
 const deshabilitado = ref(false)
 const email = ref('')
 const contrasena = ref('')
 const errorLogin = ref('')
-
-function handleInicioSesion(iniciador: () => void) {
-  deshabilitado.value = true
-  iniciador()
-}
 
 async function handleLoginEmail() {
   errorLogin.value = ''
@@ -67,25 +60,7 @@ async function handleLoginEmail() {
           <button class="btn btn-primary w-full" type="submit" :disabled="deshabilitado">
             <span>Iniciar sesión</span>
           </button>
-          <p class="text-center text-sm text-gray-700">
-            ¿No tienes cuenta?
-            <NuxtLink class="link link-primary" to="/register">Regístrate</NuxtLink>
-          </p>
         </form>
-        <div class="space-y-6">
-          <SocialSignIn
-            nombre="Google"
-            nombre_icono="tabler:brand-google"
-            :deshabilitado="deshabilitado"
-            @inicio_sesion="handleInicioSesion(googleSignIn)"
-          />
-          <SocialSignIn
-            nombre="Github"
-            nombre_icono="tabler:brand-github"
-            :deshabilitado="deshabilitado"
-            @inicio_sesion="handleInicioSesion(githubSignIn)"
-          />
-        </div>
       </div>
     </div>
   </div>

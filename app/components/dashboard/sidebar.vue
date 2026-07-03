@@ -11,6 +11,7 @@ const role = computed(() => user.value?.role)
     <li v-if="role === 'oficina'"><NuxtLink to="/dashboard/lotes">Lotes</NuxtLink></li>
     <li v-if="role === 'oficina'"><NuxtLink to="/dashboard/ventas">Ventas</NuxtLink></li>
     <li v-if="role === 'oficina'"><NuxtLink to="/dashboard/informes">Informes</NuxtLink></li>
+    <li v-if="role === 'oficina'"><NuxtLink to="/dashboard/usuarios">Usuarios</NuxtLink></li>
     <li><NuxtLink to="/dashboard/escaneo">Escaneo</NuxtLink></li>
     <li><NuxtLink to="/dashboard/trazabilidad">Trazabilidad</NuxtLink></li>
   </ul>

@@ -47,19 +47,11 @@ export function useAuth() {
     })
   }
 
-  const githubSignIn = () => {
-    client.signIn.social({ provider: 'github', callbackURL: options.redirectUserTo })
-  }
-  const googleSignIn = () => {
-    client.signIn.social({ provider: 'google', callbackURL: options.redirectUserTo })
-  }
-
   return {
     session,
     user,
     loggedIn: computed(() => !!session.value),
     signIn: client.signIn,
-    signUp: client.signUp,
     async signOut({ redirectTo }: { redirectTo?: RouteLocationRaw } = {}) {
       const res = await client.signOut()
       session.value = null
@@ -72,7 +64,5 @@ export function useAuth() {
     options,
     fetchSession,
     client,
-    githubSignIn,
-    googleSignIn,
   }
 }
