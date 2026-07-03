@@ -18,7 +18,7 @@ watch(
       <div class="drawer-content overflow-y-auto">
         <NuxtPage class="p-4" />
       </div>
-      <div class="drawer-side z-20">
+      <div class="drawer-side z-20 print:hidden">
         <label for="dash-drawer" aria-label="Cerrar menú" class="drawer-overlay"></label>
         <dashboard-sidebar />
       </div>

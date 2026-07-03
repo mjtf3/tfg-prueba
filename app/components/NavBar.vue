@@ -14,7 +14,7 @@ const closeDropdown = () => {
 
 <template>
   <!-- Esto de fondo se colorea y se pone la sombra -->
-  <div class="bg-base-100 shadow-md border-b border-gray-400 z-10">
+  <div class="bg-base-100 shadow-md border-b border-gray-400 z-10 print:hidden">
     <!-- Luego lo que es la navbar solo ocupa lo que ocupe container -->
     <div class="navbar container mx-auto">
       <label
