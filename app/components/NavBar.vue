@@ -1,5 +1,8 @@
 <script setup>
 const { loggedIn, signOut, user } = useAuth()
+const route = useRoute()
+// El botón de menú solo aparece en el panel (donde existe el drawer) y en móvil.
+const esDashboard = computed(() => route.path.startsWith('/dashboard'))
 // Función para quitar el foco del elemento activo (cierra el dropdown)
 const closeDropdown = () => {
   const elem = document.activeElement
@@ -11,9 +14,17 @@ const closeDropdown = () => {
 
 <template>
   <!-- Esto de fondo se colorea y se pone la sombra -->
-  <div class="bg-base-100 shadow-md border-b border-gray-400 z-10">
+  <div class="bg-base-100 shadow-md border-b border-gray-400 z-10 print:hidden">
     <!-- Luego lo que es la navbar solo ocupa lo que ocupe container -->
     <div class="navbar container mx-auto">
+      <label
+        v-if="esDashboard"
+        for="dash-drawer"
+        class="btn btn-ghost btn-square lg:hidden mr-1"
+        aria-label="Abrir menú"
+      >
+        <Icon name="tabler:menu-2" size="24" />
+      </label>
       <div class="flex-1">
         <NuxtLink to="/" class="btn btn-ghost text-xl">TFG</NuxtLink>
       </div>

@@ -4,7 +4,7 @@ const role = computed(() => user.value?.role)
 </script>
 
 <template>
-  <ul class="menu bg-base-200 w-60 p-4 h-full shadow-md">
+  <ul class="menu bg-base-200 w-60 min-h-full p-4 shadow-md">
     <li class="menu-title">{{ role === 'oficina' ? 'Oficina / gerencia' : 'Operario de almacén' }}</li>
     <li><NuxtLink to="/dashboard">Dashboard</NuxtLink></li>
     <li v-if="role === 'oficina'"><NuxtLink to="/dashboard/recolecciones">Recolecciones</NuxtLink></li>
