@@ -14,7 +14,10 @@ export function useQrScanner(onDecode: (data: string) => void) {
 
   async function start() {
     error.value = ''
-    if (!videoRef.value) return
+    if (!videoRef.value) {
+      error.value = 'La cámara no está disponible en esta pantalla.'
+      return
+    }
 
     // La cámara solo está disponible en contexto seguro (HTTPS o localhost). Al
     // abrir el dev server desde el móvil por IP de red (http://…) el navegador no

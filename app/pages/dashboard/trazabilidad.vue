@@ -42,7 +42,13 @@ async function consultar(code?: string) {
   }
 }
 
-const { videoRef, scanning, error: camError, start, stop } = useQrScanner((data) => {
+const {
+  videoRef,
+  scanning,
+  error: camError,
+  start,
+  stop,
+} = useQrScanner((data) => {
   stop()
   consultar(data)
 })
@@ -57,21 +63,35 @@ function fmtFecha(f: string) {
     <h1 class="text-2xl font-bold mb-4">Trazabilidad</h1>
 
     <form class="join w-full mb-3" @submit.prevent="consultar()">
-      <input v-model="qr" type="text" placeholder="Código QR del palé (p. ej. TRZ-…-P01)" class="input input-bordered join-item flex-1" />
+      <input
+        v-model="qr"
+        type="text"
+        placeholder="Código QR del palé (p. ej. TRZ-…-P01)"
+        class="input input-bordered join-item flex-1"
+      />
       <button type="submit" class="btn btn-primary join-item" :disabled="cargando">Consultar</button>
     </form>
 
     <div class="mb-3">
-      <button v-if="!scanning" class="btn btn-outline btn-sm" @click="start"><Icon name="tabler:camera" /> Escanear</button>
+      <button v-if="!scanning" class="btn btn-outline btn-sm" @click="start">
+        <Icon name="tabler:camera" /> Escanear
+      </button>
       <button v-else class="btn btn-outline btn-sm" @click="stop"><Icon name="tabler:player-stop" /> Detener</button>
     </div>
-    <div v-if="scanning" class="relative bg-base-300 rounded-box overflow-hidden aspect-square mb-3">
+    <div class="relative bg-base-300 rounded-box overflow-hidden aspect-square mb-3">
       <video ref="videoRef" class="w-full h-full object-cover"></video>
+      <div v-if="!scanning" class="absolute inset-0 flex items-center justify-center text-base-content/50">
+        <Icon name="tabler:camera-off" size="48" />
+      </div>
     </div>
-    <div v-if="camError" class="alert alert-error mb-3"><span>{{ camError }}</span></div>
+    <div v-if="camError" class="alert alert-error mb-3">
+      <span>{{ camError }}</span>
+    </div>
 
     <div v-if="cargando" class="flex justify-center p-8"><span class="loading loading-spinner" /></div>
-    <div v-else-if="error" class="alert alert-warning"><Icon name="tabler:alert-triangle" /><span>{{ error }}</span></div>
+    <div v-else-if="error" class="alert alert-warning">
+      <Icon name="tabler:alert-triangle" /><span>{{ error }}</span>
+    </div>
 
     <!-- Cadena de trazabilidad -->
     <div v-else-if="resultado" class="flex flex-col gap-4">
@@ -91,7 +111,10 @@ function fmtFecha(f: string) {
             {{ fmtFecha(resultado.recoleccion.fechaRecoleccion) }}
           </p>
           <p class="text-sm opacity-80">
-            <span class="badge badge-sm" :class="resultado.recoleccion.tipo === 'propio' ? 'badge-success' : 'badge-warning'">
+            <span
+              class="badge badge-sm"
+              :class="resultado.recoleccion.tipo === 'propio' ? 'badge-success' : 'badge-warning'"
+            >
               {{ resultado.recoleccion.tipo }}
             </span>
             <template v-if="resultado.recoleccion.tipo === 'propio'">
