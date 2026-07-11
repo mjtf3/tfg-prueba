@@ -4,6 +4,8 @@ definePageMeta({ middleware: 'oficina' })
 const route = useRoute()
 const { data: rec, error } = await useFetch(`/api/recolecciones/${route.params.id}`)
 
+const noEncontrada = computed(() => estadoDe(error.value) === 404)
+
 function fmtFecha(f: string) {
   return new Date(f).toLocaleDateString('es-ES')
 }
@@ -15,7 +17,8 @@ function imprimir() {
 <template>
   <div v-if="error" class="alert alert-error">
     <Icon name="tabler:alert-triangle" />
-    <span>No se encontró la recolección.</span>
+    <span v-if="noEncontrada">No se encontró la recolección.</span>
+    <span v-else>Error al cargar la recolección. Inténtalo de nuevo.</span>
   </div>
 
   <div v-else-if="rec">
@@ -36,21 +39,45 @@ function imprimir() {
       </span>
 
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 my-4">
-        <div><div class="text-xs opacity-60">Fecha</div>{{ fmtFecha(rec.fechaRecoleccion) }}</div>
-        <div><div class="text-xs opacity-60">Producto</div>{{ rec.producto?.nombre }}</div>
-        <div><div class="text-xs opacity-60">Categoría</div>{{ rec.categoria?.nombre }}</div>
-        <div v-if="rec.albaran"><div class="text-xs opacity-60">Albarán</div>{{ rec.albaran }}</div>
-        <div v-if="rec.precioCoste"><div class="text-xs opacity-60">Coste (€/kg)</div>{{ rec.precioCoste }}</div>
-        <div><div class="text-xs opacity-60">Total</div>{{ rec.totalKilos }} kg</div>
+        <div>
+          <div class="text-xs opacity-60">Fecha</div>
+          {{ fmtFecha(rec.fechaRecoleccion) }}
+        </div>
+        <div>
+          <div class="text-xs opacity-60">Producto</div>
+          {{ rec.producto?.nombre }}
+        </div>
+        <div>
+          <div class="text-xs opacity-60">Categoría</div>
+          {{ rec.categoria?.nombre }}
+        </div>
+        <div v-if="rec.albaran">
+          <div class="text-xs opacity-60">Albarán</div>
+          {{ rec.albaran }}
+        </div>
+        <div v-if="rec.precioCoste">
+          <div class="text-xs opacity-60">Coste (€/kg)</div>
+          {{ rec.precioCoste }}
+        </div>
+        <div>
+          <div class="text-xs opacity-60">Total</div>
+          {{ rec.totalKilos }} kg
+        </div>
         <template v-if="rec.tipo === 'propio'">
           <div v-if="rec.parcela">
             <div class="text-xs opacity-60">Origen</div>
             {{ rec.parcela.pueblo?.nombre }} / {{ rec.parcela.nombre || rec.parcela.codigo }}
             <span v-if="rec.recinto"> / {{ rec.recinto.codigo }}</span>
           </div>
-          <div v-if="rec.finca"><div class="text-xs opacity-60">Finca</div>{{ rec.finca.nombre }}</div>
+          <div v-if="rec.finca">
+            <div class="text-xs opacity-60">Finca</div>
+            {{ rec.finca.nombre }}
+          </div>
         </template>
-        <div v-else-if="rec.proveedor"><div class="text-xs opacity-60">Proveedor</div>{{ rec.proveedor.nombre }}</div>
+        <div v-else-if="rec.proveedor">
+          <div class="text-xs opacity-60">Proveedor</div>
+          {{ rec.proveedor.nombre }}
+        </div>
       </div>
 
       <h2 class="text-lg font-semibold mb-2">Palés ({{ rec.pales.length }})</h2>

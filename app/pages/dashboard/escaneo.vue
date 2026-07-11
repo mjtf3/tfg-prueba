@@ -42,8 +42,9 @@ async function onDecode(data: string) {
       mensaje.value = `Palé ${data}`
     }
     mensajeTipo.value = 'ok'
-  } catch {
-    mensaje.value = `Palé no reconocido: ${data}`
+  } catch (e) {
+    mensaje.value =
+      estadoDe(e) === 404 ? `Palé no reconocido: ${data}` : 'Error al consultar el palé. Inténtalo de nuevo.'
     mensajeTipo.value = 'error'
   }
 }
@@ -88,9 +89,7 @@ const { videoRef, scanning, error, start, stop } = useQrScanner(onDecode)
       <button v-if="!scanning" class="btn btn-primary flex-1" @click="start">
         <Icon name="tabler:camera" /> Iniciar cámara
       </button>
-      <button v-else class="btn btn-outline flex-1" @click="stop">
-        <Icon name="tabler:player-stop" /> Detener
-      </button>
+      <button v-else class="btn btn-outline flex-1" @click="stop"><Icon name="tabler:player-stop" /> Detener</button>
     </div>
 
     <div v-if="error" class="alert alert-error mb-3">
@@ -121,11 +120,18 @@ const { videoRef, scanning, error, start, stop } = useQrScanner(onDecode)
         </div>
 
         <div class="flex gap-2 mt-2">
-          <button class="btn btn-sm btn-primary" @click="incrementar(1, 0)">
-            <Icon name="tabler:plus" /> 1 caja
+          <button class="btn btn-sm btn-primary" @click="incrementar(1, 0)"><Icon name="tabler:plus" /> 1 caja</button>
+          <button class="btn btn-sm btn-outline" :disabled="vista.numCajas === 0" @click="incrementar(-1, 0)">
+            <Icon name="tabler:minus" /> 1 caja
           </button>
           <div class="join">
-            <input v-model.number="kilosManual" type="number" step="0.01" min="0" class="input input-bordered input-sm join-item w-24" placeholder="kg" />
+            <input
+              v-model.number="kilosManual"
+              type="number"
+              step="0.01"
+              class="input input-bordered input-sm join-item w-24"
+              placeholder="kg"
+            />
             <button class="btn btn-sm join-item" :disabled="!kilosManual" @click="incrementar(0, kilosManual)">
               Añadir kg
             </button>

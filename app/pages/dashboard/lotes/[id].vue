@@ -4,10 +4,15 @@ definePageMeta({ middleware: 'oficina' })
 const route = useRoute()
 const { data: lote, error, refresh } = await useFetch(`/api/lotes/${route.params.id}`)
 
+const noEncontrado = computed(() => estadoDe(error.value) === 404)
+
 const cajaSeleccion = ref<number[]>([])
 const cajaCodigo = ref('')
 const cajaError = ref('')
 const guardandoCaja = ref(false)
+
+const eliminandoCajaId = ref<number | null>(null)
+const errorEliminarCaja = ref('')
 
 // Tope de 2 recolecciones por caja: se deshabilitan más casillas al llegar a 2.
 function casillaBloqueada(recoleccionId: number) {
@@ -36,6 +41,21 @@ async function addCaja() {
   }
 }
 
+async function eliminarCaja(c: { id: number; codigo?: string | null }) {
+  if (eliminandoCajaId.value !== null) return
+  if (!confirm(`¿Eliminar la caja ${c.codigo || `#${c.id}`}?`)) return
+  errorEliminarCaja.value = ''
+  eliminandoCajaId.value = c.id
+  try {
+    await $fetch(`/api/cajas/${c.id}`, { method: 'DELETE' })
+    await refresh()
+  } catch (e) {
+    errorEliminarCaja.value = mensajeDe(e, 'No se pudo eliminar la caja')
+  } finally {
+    eliminandoCajaId.value = null
+  }
+}
+
 function fmtFecha(f: string) {
   return new Date(f).toLocaleDateString('es-ES')
 }
@@ -44,7 +64,8 @@ function fmtFecha(f: string) {
 <template>
   <div v-if="error" class="alert alert-error">
     <Icon name="tabler:alert-triangle" />
-    <span>No se encontró el lote.</span>
+    <span v-if="noEncontrado">No se encontró el lote.</span>
+    <span v-else>Error al cargar el lote. Inténtalo de nuevo.</span>
   </div>
 
   <div v-else-if="lote">
@@ -54,12 +75,30 @@ function fmtFecha(f: string) {
 
     <h1 class="text-2xl font-bold font-mono">Lote {{ lote.codigo }}</h1>
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 my-4">
-      <div><div class="text-xs opacity-60">Producto</div>{{ lote.producto?.nombre }}</div>
-      <div><div class="text-xs opacity-60">Categoría</div>{{ lote.categoria?.nombre }}</div>
-      <div v-if="lote.numPiezas != null"><div class="text-xs opacity-60">Nº piezas</div>{{ lote.numPiezas }}</div>
-      <div v-if="lote.rgseaa"><div class="text-xs opacity-60">RGSEAA</div>{{ lote.rgseaa }}</div>
-      <div v-if="lote.ggn"><div class="text-xs opacity-60">GGN</div>{{ lote.ggn }}</div>
-      <div v-if="lote.origen"><div class="text-xs opacity-60">Origen</div>{{ lote.origen }}</div>
+      <div>
+        <div class="text-xs opacity-60">Producto</div>
+        {{ lote.producto?.nombre }}
+      </div>
+      <div>
+        <div class="text-xs opacity-60">Categoría</div>
+        {{ lote.categoria?.nombre }}
+      </div>
+      <div v-if="lote.numPiezas != null">
+        <div class="text-xs opacity-60">Nº piezas</div>
+        {{ lote.numPiezas }}
+      </div>
+      <div v-if="lote.rgseaa">
+        <div class="text-xs opacity-60">RGSEAA</div>
+        {{ lote.rgseaa }}
+      </div>
+      <div v-if="lote.ggn">
+        <div class="text-xs opacity-60">GGN</div>
+        {{ lote.ggn }}
+      </div>
+      <div v-if="lote.origen">
+        <div class="text-xs opacity-60">Origen</div>
+        {{ lote.origen }}
+      </div>
     </div>
 
     <!-- Recolecciones agrupadas -->
@@ -74,7 +113,14 @@ function fmtFecha(f: string) {
     <h2 class="text-lg font-semibold mb-2">Ventas ({{ lote.ventas.length }})</h2>
     <div v-if="lote.ventas.length" class="overflow-x-auto mb-6">
       <table class="table table-sm">
-        <thead><tr><th>Fecha</th><th class="text-right">Kg</th><th class="text-right">€/kg</th><th class="text-right">Total</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th class="text-right">Kg</th>
+            <th class="text-right">€/kg</th>
+            <th class="text-right">Total</th>
+          </tr>
+        </thead>
         <tbody>
           <tr v-for="v in lote.ventas" :key="v.id">
             <td>{{ fmtFecha(v.fechaVenta) }}</td>
@@ -89,9 +135,15 @@ function fmtFecha(f: string) {
 
     <!-- Cajas -->
     <h2 class="text-lg font-semibold mb-2">Cajas de producto terminado ({{ lote.cajas.length }})</h2>
+    <div v-if="errorEliminarCaja" class="alert alert-error alert-sm mb-2">
+      <span>{{ errorEliminarCaja }}</span>
+    </div>
     <div class="flex flex-wrap gap-2 mb-4">
-      <span v-for="c in lote.cajas" :key="c.id" class="badge badge-neutral">
+      <span v-for="c in lote.cajas" :key="c.id" class="badge badge-neutral gap-1">
         {{ c.codigo || `#${c.id}` }} · {{ c.recolecciones.length }} recol.
+        <button class="btn btn-ghost btn-xs text-error" :disabled="eliminandoCajaId === c.id" @click="eliminarCaja(c)">
+          <Icon name="tabler:trash" />
+        </button>
       </span>
     </div>
 
@@ -104,7 +156,11 @@ function fmtFecha(f: string) {
       </label>
       <p class="text-sm opacity-70">Selecciona hasta 2 recolecciones del lote:</p>
       <div class="flex flex-col gap-1 my-2">
-        <label v-for="lr in lote.recolecciones" :key="lr.recoleccionId" class="label cursor-pointer justify-start gap-3">
+        <label
+          v-for="lr in lote.recolecciones"
+          :key="lr.recoleccionId"
+          class="label cursor-pointer justify-start gap-3"
+        >
           <input
             v-model="cajaSeleccion"
             type="checkbox"
@@ -115,7 +171,9 @@ function fmtFecha(f: string) {
           <span class="font-mono text-sm">{{ lr.recoleccion?.codigoTrazabilidad }}</span>
         </label>
       </div>
-      <div v-if="cajaError" class="alert alert-error alert-sm mb-2"><span>{{ cajaError }}</span></div>
+      <div v-if="cajaError" class="alert alert-error alert-sm mb-2">
+        <span>{{ cajaError }}</span>
+      </div>
       <button class="btn btn-primary btn-sm" :disabled="guardandoCaja || !cajaSeleccion.length" @click="addCaja">
         <span v-if="guardandoCaja" class="loading loading-spinner loading-sm" />
         Añadir caja

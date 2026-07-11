@@ -55,10 +55,7 @@ export const parcela = pgTable(
       .notNull()
       .references(() => pueblo.id),
   },
-  (t) => [
-    index('parcela_pueblo_idx').on(t.puebloId),
-    unique('parcela_codigo_pueblo_uq').on(t.codigo, t.puebloId),
-  ]
+  (t) => [index('parcela_pueblo_idx').on(t.puebloId), unique('parcela_codigo_pueblo_uq').on(t.codigo, t.puebloId)]
 )
 
 /**
@@ -75,10 +72,7 @@ export const recinto = pgTable(
       .notNull()
       .references(() => parcela.id),
   },
-  (t) => [
-    index('recinto_parcela_idx').on(t.parcelaId),
-    unique('recinto_codigo_parcela_uq').on(t.codigo, t.parcelaId),
-  ]
+  (t) => [index('recinto_parcela_idx').on(t.parcelaId), unique('recinto_codigo_parcela_uq').on(t.codigo, t.parcelaId)]
 )
 
 /** Finca / huerto de origen (texto de la etiqueta interna, p. ej. CANARIO). */
@@ -275,6 +269,8 @@ export const venta = pgTable(
     fechaVenta: date('fecha_venta').notNull(),
     kilos: numeric('kilos', { precision: 10, scale: 2 }).notNull(),
     precioVenta: numeric('precio_venta', { precision: 12, scale: 2 }).notNull(),
+    // Destino de la mercancía: trazabilidad hacia delante (art. 18 Reglamento CE 178/2002).
+    cliente: text('cliente'),
     // Importe de la operación, generado por PostgreSQL a partir de kilos y precio
     // de venta (RF-11). Al ser una columna generada no puede desincronizarse ni
     // insertarse manualmente.

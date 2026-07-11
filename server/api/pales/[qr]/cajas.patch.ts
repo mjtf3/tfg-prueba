@@ -6,12 +6,15 @@ import { requireUser } from '../../../utils/require-auth'
 import { resumenRecoleccion } from '../../../utils/totales'
 
 const bodySchema = z.object({
-  cajas: z.number().int().min(0).default(1),
-  kilos: z.number().min(0).default(0),
+  // Admite valores negativos: permiten corregir escaneos erróneos restando
+  // cajas o kilos. El resultado nunca baja de cero (se ajusta en la consulta SQL).
+  cajas: z.number().int().default(1),
+  kilos: z.number().default(0),
 })
 
-/** Añade cajas o kilos a un palé (modo de escaneo consecutivo, RF-04) y devuelve
- * los totales acumulados de la recolección (RF-11). */
+/** Añade o resta cajas y kilos a un palé (modo de escaneo consecutivo y su
+ * corrección, RF-04) y devuelve los totales acumulados de la recolección
+ * (RF-11). El resultado se acota a cero: no se admiten cajas ni kilos negativos. */
 export default defineEventHandler(async (event) => {
   await requireUser(event)
 
@@ -29,8 +32,8 @@ export default defineEventHandler(async (event) => {
   const [actualizado] = await db
     .update(pale)
     .set({
-      numCajas: sql`${pale.numCajas} + ${cajas}`,
-      kilos: sql`${pale.kilos} + ${kilos}`,
+      numCajas: sql`GREATEST(0, ${pale.numCajas} + ${cajas})`,
+      kilos: sql`GREATEST(0, ${pale.kilos} + ${kilos})`,
     })
     .where(eq(pale.qr, qr))
     .returning()

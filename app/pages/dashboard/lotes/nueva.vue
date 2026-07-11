@@ -47,6 +47,14 @@ watch([() => form.productoId, () => form.categoriaId], () => {
 const saving = ref(false)
 const error = ref('')
 
+// Con `v-model.number`, si el usuario escribe y borra el campo queda como `''`,
+// que zod `.optional()` no acepta: lo normalizamos a `undefined`.
+function numOrUndefined(v: unknown): number | undefined {
+  if (v === null || v === undefined || v === '') return undefined
+  const n = Number(v)
+  return Number.isNaN(n) ? undefined : n
+}
+
 async function submit() {
   error.value = ''
   saving.value = true
@@ -57,7 +65,7 @@ async function submit() {
         codigo: form.codigo,
         productoId: form.productoId,
         categoriaId: form.categoriaId,
-        numPiezas: form.numPiezas ?? undefined,
+        numPiezas: numOrUndefined(form.numPiezas),
         rgseaa: form.rgseaa || undefined,
         ggn: form.ggn || undefined,
         origen: form.origen || undefined,
@@ -81,7 +89,13 @@ async function submit() {
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label class="form-control">
           <span class="label-text">Nº de lote</span>
-          <input v-model="form.codigo" type="text" required class="input input-bordered w-full" placeholder="p. ej. 0700018" />
+          <input
+            v-model="form.codigo"
+            type="text"
+            required
+            class="input input-bordered w-full"
+            placeholder="p. ej. 0700018"
+          />
         </label>
         <label class="form-control">
           <span class="label-text">Producto</span>

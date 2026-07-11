@@ -1,6 +1,7 @@
 import { z } from 'zod'
+import { eq } from 'drizzle-orm'
 import { db } from '../../database'
-import { recoleccion, pale } from '../../database/schemas'
+import { recoleccion, pale, producto, categoria, parcela, recinto, finca, proveedor } from '../../database/schemas'
 import { requireRole } from '../../utils/require-auth'
 import { generarCodigoTrazabilidad, generarQrPale } from '../../utils/ids'
 
@@ -52,6 +53,52 @@ export default defineEventHandler(async (event) => {
   }
   const body = parsed.data
   const esPropio = body.tipo === 'propio'
+
+  // Comprobación de existencia de las referencias (RF-01): sin esto, una FK
+  // inválida acaba en un 500. A lo sumo una consulta por tabla implicada.
+  const [prod, cat, parc, recintoRow, fin, prov] = await Promise.all([
+    db.select({ id: producto.id }).from(producto).where(eq(producto.id, body.productoId)).limit(1),
+    db.select({ id: categoria.id }).from(categoria).where(eq(categoria.id, body.categoriaId)).limit(1),
+    body.parcelaId != null
+      ? db.select({ id: parcela.id }).from(parcela).where(eq(parcela.id, body.parcelaId)).limit(1)
+      : Promise.resolve([]),
+    body.recintoId != null
+      ? db
+          .select({ id: recinto.id, parcelaId: recinto.parcelaId })
+          .from(recinto)
+          .where(eq(recinto.id, body.recintoId))
+          .limit(1)
+      : Promise.resolve([]),
+    body.fincaId != null
+      ? db.select({ id: finca.id }).from(finca).where(eq(finca.id, body.fincaId)).limit(1)
+      : Promise.resolve([]),
+    body.proveedorId != null
+      ? db.select({ id: proveedor.id }).from(proveedor).where(eq(proveedor.id, body.proveedorId)).limit(1)
+      : Promise.resolve([]),
+  ])
+  if (!prod.length) {
+    throw createError({ statusCode: 400, statusMessage: 'El producto indicado no existe' })
+  }
+  if (!cat.length) {
+    throw createError({ statusCode: 400, statusMessage: 'La categoría indicada no existe' })
+  }
+  if (body.parcelaId != null && !parc.length) {
+    throw createError({ statusCode: 400, statusMessage: 'La parcela indicada no existe' })
+  }
+  if (body.recintoId != null && !recintoRow.length) {
+    throw createError({ statusCode: 400, statusMessage: 'El recinto indicado no existe' })
+  }
+  if (body.fincaId != null && !fin.length) {
+    throw createError({ statusCode: 400, statusMessage: 'La finca indicada no existe' })
+  }
+  if (body.proveedorId != null && !prov.length) {
+    throw createError({ statusCode: 400, statusMessage: 'El proveedor indicado no existe' })
+  }
+  // El recinto es una subdivisión de la parcela: si se indican ambos, deben ser coherentes.
+  if (body.recintoId != null && body.parcelaId != null && recintoRow[0].parcelaId !== body.parcelaId) {
+    throw createError({ statusCode: 400, statusMessage: 'El recinto no pertenece a la parcela indicada' })
+  }
+
   const codigo = generarCodigoTrazabilidad()
 
   const creada = await db.transaction(async (tx) => {

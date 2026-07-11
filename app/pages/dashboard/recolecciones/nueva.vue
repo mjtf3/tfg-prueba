@@ -72,6 +72,15 @@ watch(
   }
 )
 
+// El backend usa zod `.optional()`, que no acepta `null`; y con `v-model.number`
+// un campo numérico vaciado por el usuario queda como `''`. Esta función normaliza
+// ambos casos al `undefined` que espera la API.
+function numOrUndefined(v: unknown): number | undefined {
+  if (v === null || v === undefined || v === '') return undefined
+  const n = Number(v)
+  return Number.isNaN(n) ? undefined : n
+}
+
 function addPale() {
   pales.value.push({ numCajas: 0, kilos: 0 })
 }
@@ -89,17 +98,17 @@ async function submit() {
       tipo: form.tipo,
       fechaRecoleccion: form.fechaRecoleccion,
       albaran: form.albaran || undefined,
-      precioCoste: form.precioCoste ?? undefined,
+      precioCoste: numOrUndefined(form.precioCoste),
       productoId: form.productoId,
       categoriaId: form.categoriaId,
       pales: pales.value.map((p) => ({ numCajas: Number(p.numCajas), kilos: Number(p.kilos) })),
     }
     if (form.tipo === 'propio') {
-      payload.parcelaId = form.parcelaId
-      payload.recintoId = form.recintoId ?? undefined
-      payload.fincaId = form.fincaId ?? undefined
+      payload.parcelaId = numOrUndefined(form.parcelaId)
+      payload.recintoId = numOrUndefined(form.recintoId)
+      payload.fincaId = numOrUndefined(form.fincaId)
     } else {
-      payload.proveedorId = form.proveedorId
+      payload.proveedorId = numOrUndefined(form.proveedorId)
     }
     const rec = await $fetch<{ id: number }>('/api/recolecciones', { method: 'POST', body: payload })
     await router.push(`/dashboard/recolecciones/${rec.id}`)
@@ -161,23 +170,37 @@ async function submit() {
         </label>
         <label class="form-control">
           <span class="label-text">{{ form.tipo === 'propio' ? 'Coste (€/kg)' : 'Precio de compra (€/kg)' }}</span>
-          <input v-model.number="form.precioCoste" type="number" step="0.01" min="0" class="input input-bordered w-full" />
+          <input
+            v-model.number="form.precioCoste"
+            type="number"
+            step="0.01"
+            min="0"
+            class="input input-bordered w-full"
+          />
         </label>
       </div>
 
       <!-- Origen propio: ubicación -->
-      <fieldset v-if="form.tipo === 'propio'" class="grid grid-cols-1 sm:grid-cols-2 gap-4 border border-base-300 rounded-box p-4">
+      <fieldset
+        v-if="form.tipo === 'propio'"
+        class="grid grid-cols-1 sm:grid-cols-2 gap-4 border border-base-300 rounded-box p-4"
+      >
         <legend class="px-2 text-sm font-semibold">Origen (parcela)</legend>
         <label class="form-control">
           <span class="label-text">Pueblo</span>
-          <select v-model.number="form.puebloId" class="select select-bordered w-full">
+          <select v-model.number="form.puebloId" required class="select select-bordered w-full">
             <option :value="null" disabled>Selecciona…</option>
             <option v-for="p in pueblos" :key="p.id" :value="p.id">{{ p.codigo }} · {{ p.nombre }}</option>
           </select>
         </label>
         <label class="form-control">
           <span class="label-text">Parcela</span>
-          <select v-model.number="form.parcelaId" :disabled="!parcelas.length" class="select select-bordered w-full">
+          <select
+            v-model.number="form.parcelaId"
+            required
+            :disabled="!parcelas.length"
+            class="select select-bordered w-full"
+          >
             <option :value="null" disabled>Selecciona…</option>
             <option v-for="p in parcelas" :key="p.id" :value="p.id">{{ p.codigo }} · {{ p.nombre }}</option>
           </select>
@@ -211,9 +234,7 @@ async function submit() {
       <div class="border border-base-300 rounded-box p-4">
         <div class="flex items-center justify-between mb-2">
           <span class="font-semibold">Palés</span>
-          <button type="button" class="btn btn-sm" @click="addPale">
-            <Icon name="tabler:plus" /> Añadir palé
-          </button>
+          <button type="button" class="btn btn-sm" @click="addPale"><Icon name="tabler:plus" /> Añadir palé</button>
         </div>
         <div v-for="(p, i) in pales" :key="i" class="flex items-end gap-2 mb-2">
           <label class="form-control flex-1">
@@ -224,12 +245,7 @@ async function submit() {
             <span class="label-text">Kilos</span>
             <input v-model.number="p.kilos" type="number" step="0.01" min="0" class="input input-bordered w-full" />
           </label>
-          <button
-            type="button"
-            class="btn btn-ghost btn-square"
-            :disabled="pales.length === 1"
-            @click="removePale(i)"
-          >
+          <button type="button" class="btn btn-ghost btn-square" :disabled="pales.length === 1" @click="removePale(i)">
             <Icon name="tabler:trash" />
           </button>
         </div>
