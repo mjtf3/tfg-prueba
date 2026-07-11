@@ -4,9 +4,9 @@ import { lote, venta } from '../../database/schemas'
 import { requireRole } from '../../utils/require-auth'
 
 /**
- * Elimina un lote (RF-06). Se rechaza si tiene ventas registradas (obligaría a
- * borrar primero el histórico comercial); si no las tiene, sus cajas y los
- * vínculos con recolecciones (`lote_recoleccion`) caen en cascada.
+ * Elimina un lote (RF-06). Se rechaza si tiene ventas registradas —incluidas
+ * las anuladas: son histórico auditable y no se borran—; si no las tiene, sus
+ * cajas y los vínculos con recolecciones (`lote_recoleccion`) caen en cascada.
  */
 export default defineEventHandler(async (event) => {
   await requireRole(event, 'oficina')
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   if (ventaDelLote) {
     throw createError({
       statusCode: 400,
-      statusMessage: 'No se puede eliminar un lote con ventas registradas; elimina antes sus ventas',
+      statusMessage: 'No se puede eliminar un lote con ventas registradas (aunque estén anuladas)',
     })
   }
 

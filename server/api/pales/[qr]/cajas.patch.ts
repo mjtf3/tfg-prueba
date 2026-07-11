@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { db } from '../../../database'
 import { pale } from '../../../database/schemas'
 import { requireUser } from '../../../utils/require-auth'
@@ -7,14 +7,16 @@ import { resumenRecoleccion } from '../../../utils/totales'
 
 const bodySchema = z.object({
   // Admite valores negativos: permiten corregir escaneos erróneos restando
-  // cajas o kilos. El resultado nunca baja de cero (se ajusta en la consulta SQL).
+  // cajas o kilos.
   cajas: z.number().int().default(1),
   kilos: z.number().default(0),
 })
 
 /** Añade o resta cajas y kilos a un palé (modo de escaneo consecutivo y su
  * corrección, RF-04) y devuelve los totales acumulados de la recolección
- * (RF-11). El resultado se acota a cero: no se admiten cajas ni kilos negativos. */
+ * (RF-11). Una corrección que dejaría las cajas o los kilos en negativo se
+ * rechaza con un 400 en vez de recortarse en silencio: casi siempre es un
+ * error de tecleo y recortar borraría el conteo real. */
 export default defineEventHandler(async (event) => {
   await requireUser(event)
 
@@ -29,16 +31,25 @@ export default defineEventHandler(async (event) => {
   }
   const { cajas, kilos } = parsed.data
 
+  // La condición de no-negatividad va en el propio WHERE para que la
+  // comprobación y la actualización sean una sola operación atómica.
   const [actualizado] = await db
     .update(pale)
     .set({
-      numCajas: sql`GREATEST(0, ${pale.numCajas} + ${cajas})`,
-      kilos: sql`GREATEST(0, ${pale.kilos} + ${kilos})`,
+      numCajas: sql`${pale.numCajas} + ${cajas}`,
+      kilos: sql`${pale.kilos} + ${kilos}`,
     })
-    .where(eq(pale.qr, qr))
+    .where(and(eq(pale.qr, qr), sql`${pale.numCajas} + ${cajas} >= 0`, sql`${pale.kilos} + ${kilos} >= 0`))
     .returning()
   if (!actualizado) {
-    throw createError({ statusCode: 404, statusMessage: 'Palé no encontrado' })
+    const [existe] = await db.select({ id: pale.id }).from(pale).where(eq(pale.qr, qr)).limit(1)
+    if (!existe) {
+      throw createError({ statusCode: 404, statusMessage: 'Palé no encontrado' })
+    }
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'La corrección dejaría las cajas o los kilos del palé en negativo',
+    })
   }
 
   const rec = await db.query.recoleccion.findFirst({

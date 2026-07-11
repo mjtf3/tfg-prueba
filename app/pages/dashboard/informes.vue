@@ -22,7 +22,12 @@ const { data, pending, error } = await useFetch('/api/informes')
         <div v-else class="overflow-x-auto">
           <table class="table table-zebra">
             <thead>
-              <tr><th>Producto</th><th class="text-right">Ventas</th><th class="text-right">Kg</th><th class="text-right">Importe (€)</th></tr>
+              <tr>
+                <th>Producto</th>
+                <th class="text-right">Ventas</th>
+                <th class="text-right">Kg</th>
+                <th class="text-right">Importe (€)</th>
+              </tr>
             </thead>
             <tbody>
               <tr v-for="v in data.ventasPorProducto" :key="v.producto ?? ''">
@@ -42,11 +47,18 @@ const { data, pending, error } = await useFetch('/api/informes')
         <div v-else class="overflow-x-auto">
           <table class="table table-zebra">
             <thead>
-              <tr><th>Tipo</th><th class="text-right">Recolecciones</th></tr>
+              <tr>
+                <th>Tipo</th>
+                <th class="text-right">Recolecciones</th>
+              </tr>
             </thead>
             <tbody>
               <tr v-for="r in data.recoleccionesPorTipo" :key="r.tipo">
-                <td><span class="badge" :class="r.tipo === 'propio' ? 'badge-success' : 'badge-warning'">{{ r.tipo }}</span></td>
+                <td>
+                  <span class="badge" :class="r.tipo === 'propio' ? 'badge-success' : 'badge-warning'">{{
+                    r.tipo
+                  }}</span>
+                </td>
                 <td class="text-right">{{ r.numRecolecciones }}</td>
               </tr>
             </tbody>

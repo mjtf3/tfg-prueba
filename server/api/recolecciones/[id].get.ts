@@ -29,9 +29,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Recolección no encontrada' })
   }
 
-  const pales = await Promise.all(
-    rec.pales.map(async (p) => ({ ...p, qrDataUrl: await generarQrDataUrl(p.qr) }))
-  )
+  const pales = await Promise.all(rec.pales.map(async (p) => ({ ...p, qrDataUrl: await generarQrDataUrl(p.qr) })))
 
   return {
     ...rec,

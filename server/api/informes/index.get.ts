@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm'
+import { eq, isNull, sql } from 'drizzle-orm'
 import { db } from '../../database'
 import { venta, lote, producto, recoleccion } from '../../database/schemas'
 import { requireRole } from '../../utils/require-auth'
@@ -18,6 +18,8 @@ export default defineEventHandler(async (event) => {
     .from(venta)
     .innerJoin(lote, eq(venta.loteId, lote.id))
     .innerJoin(producto, eq(lote.productoId, producto.id))
+    // Las ventas anuladas son histórico auditable, no actividad comercial.
+    .where(isNull(venta.anuladaAt))
     .groupBy(producto.nombre)
 
   const recoleccionesPorTipo = await db

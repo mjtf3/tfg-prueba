@@ -105,7 +105,7 @@ function fmtFecha(f: string) {
     <h2 class="text-lg font-semibold mb-2">Recolecciones ({{ lote.recolecciones.length }})</h2>
     <div class="flex flex-wrap gap-2 mb-6">
       <span v-for="lr in lote.recolecciones" :key="lr.recoleccionId" class="badge badge-outline font-mono">
-        {{ lr.recoleccion?.codigoTrazabilidad }}
+        {{ lr.recoleccion?.codigoTrazabilidad }} · {{ lr.kilos }} kg
       </span>
     </div>
 
@@ -116,17 +116,23 @@ function fmtFecha(f: string) {
         <thead>
           <tr>
             <th>Fecha</th>
+            <th>Cliente</th>
             <th class="text-right">Kg</th>
             <th class="text-right">€/kg</th>
             <th class="text-right">Total</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="v in lote.ventas" :key="v.id">
+          <tr v-for="v in lote.ventas" :key="v.id" :class="{ 'opacity-50': v.anuladaAt }">
             <td>{{ fmtFecha(v.fechaVenta) }}</td>
+            <td>{{ v.cliente }}</td>
             <td class="text-right">{{ v.kilos }}</td>
             <td class="text-right">{{ v.precioVenta }}</td>
             <td class="text-right font-semibold">{{ v.total }}</td>
+            <td>
+              <span v-if="v.anuladaAt" class="badge badge-ghost">Anulada</span>
+            </td>
           </tr>
         </tbody>
       </table>

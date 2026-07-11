@@ -59,8 +59,8 @@ async function incrementar(cajas: number, kilos: number) {
     kilosManual.value = 0
     mensaje.value = 'Palé actualizado'
     mensajeTipo.value = 'ok'
-  } catch {
-    mensaje.value = 'No se pudo actualizar el palé'
+  } catch (e) {
+    mensaje.value = mensajeDe(e, 'No se pudo actualizar el palé')
     mensajeTipo.value = 'error'
   }
 }

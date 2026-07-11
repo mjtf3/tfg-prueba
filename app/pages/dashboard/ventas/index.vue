@@ -12,7 +12,9 @@ interface VentaItem {
   kilos: number
   precioVenta: number
   total: number
-  cliente?: string | null
+  cliente: string
+  anuladaAt: string | null
+  motivoAnulacion: string | null
   lote?: { codigo: string; producto?: { nombre: string | null } }
 }
 
@@ -43,7 +45,7 @@ async function submit() {
         fechaVenta: form.fechaVenta,
         kilos: Number(form.kilos),
         precioVenta: Number(form.precioVenta),
-        cliente: form.cliente.trim() || undefined,
+        cliente: form.cliente.trim(),
       },
     })
     form.loteId = null
@@ -63,23 +65,25 @@ function fmtFecha(f: string) {
   return new Date(f).toLocaleDateString('es-ES')
 }
 
-// Id de la venta que se está borrando, o null si no hay ninguna en curso: evita
-// disparar dos borrados a la vez si el usuario pulsa varias veces.
-const borrando = ref<number | null>(null)
-const errorBorrado = ref('')
+// Id de la venta que se está anulando, o null si no hay ninguna en curso: evita
+// disparar dos anulaciones a la vez si el usuario pulsa varias veces.
+const anulando = ref<number | null>(null)
+const errorAnulacion = ref('')
 
-async function eliminar(id: number) {
-  if (borrando.value !== null) return
-  if (!confirm('¿Seguro que quieres eliminar esta venta?')) return
-  errorBorrado.value = ''
-  borrando.value = id
+async function anular(id: number) {
+  if (anulando.value !== null) return
+  // El prompt hace también de confirmación: cancelarlo aborta la anulación.
+  const motivo = prompt('Anular venta: la venta se conservará en el histórico como anulada.\nMotivo (opcional):')
+  if (motivo === null) return
+  errorAnulacion.value = ''
+  anulando.value = id
   try {
-    await $fetch(`/api/ventas/${id}`, { method: 'DELETE' })
+    await $fetch(`/api/ventas/${id}`, { method: 'DELETE', body: { motivo: motivo.trim() || undefined } })
     await refresh()
   } catch (e) {
-    errorBorrado.value = mensajeDe(e, 'No se pudo eliminar la venta')
+    errorAnulacion.value = mensajeDe(e, 'No se pudo anular la venta')
   } finally {
-    borrando.value = null
+    anulando.value = null
   }
 }
 </script>
@@ -133,7 +137,7 @@ async function eliminar(id: number) {
         </div>
         <label class="form-control">
           <span class="label-text">Cliente / destino</span>
-          <input v-model="form.cliente" type="text" placeholder="Opcional" class="input input-bordered w-full" />
+          <input v-model="form.cliente" type="text" required class="input input-bordered w-full" />
         </label>
         <div class="text-right text-sm">
           Total: <span class="font-bold text-lg">{{ total.toFixed(2) }} €</span>
@@ -154,9 +158,9 @@ async function eliminar(id: number) {
     <div class="lg:col-span-2">
       <h2 class="text-lg font-semibold mb-2">Ventas registradas</h2>
 
-      <div v-if="errorBorrado" class="alert alert-error mb-3">
+      <div v-if="errorAnulacion" class="alert alert-error mb-3">
         <Icon name="tabler:alert-triangle" />
-        <span>{{ errorBorrado }}</span>
+        <span>{{ errorAnulacion }}</span>
       </div>
 
       <div v-if="pendingVentas" class="flex justify-center p-8"><span class="loading loading-spinner" /></div>
@@ -185,7 +189,7 @@ async function eliminar(id: number) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="v in ventas" :key="v.id" class="hover">
+            <tr v-for="v in ventas" :key="v.id" class="hover" :class="{ 'opacity-50': v.anuladaAt }">
               <td>{{ fmtFecha(v.fechaVenta) }}</td>
               <td class="font-mono">{{ v.lote?.codigo }}</td>
               <td>{{ v.lote?.producto?.nombre }}</td>
@@ -194,13 +198,18 @@ async function eliminar(id: number) {
               <td class="text-right">{{ v.precioVenta }}</td>
               <td class="text-right font-semibold">{{ v.total }}</td>
               <td class="text-right">
+                <span v-if="v.anuladaAt" class="badge badge-ghost" :title="v.motivoAnulacion || undefined">
+                  Anulada
+                </span>
                 <button
+                  v-else
                   type="button"
                   class="btn btn-ghost btn-xs text-error"
-                  :disabled="borrando === v.id"
-                  @click="eliminar(v.id)"
+                  :disabled="anulando === v.id"
+                  title="Anular venta"
+                  @click="anular(v.id)"
                 >
-                  <Icon name="tabler:trash" />
+                  <Icon name="tabler:ban" />
                 </button>
               </td>
             </tr>

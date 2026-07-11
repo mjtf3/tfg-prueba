@@ -11,6 +11,8 @@ interface RecolItem {
   productoId: number
   categoriaId: number
   fechaRecoleccion: string
+  totalKilos: number
+  kilosAsignados: number
 }
 
 const router = useRouter()
@@ -30,6 +32,8 @@ const form = reactive({
 })
 
 const seleccion = ref<number[]>([])
+// Kilos de cada recolección marcada que se asignan a este lote.
+const kilosAsignar = reactive<Record<number, number | null>>({})
 
 // Recolecciones que se pueden agrupar: mismo producto y categoría que el lote (RF-06).
 const compatibles = computed(() => {
@@ -39,10 +43,34 @@ const compatibles = computed(() => {
   )
 })
 
+// Kilos de la recolección aún sin repartir a ningún lote.
+function disponibleDe(r: RecolItem) {
+  return Math.round((r.totalKilos - r.kilosAsignados) * 100) / 100
+}
+
 // Si cambian producto/categoría, la selección anterior deja de ser válida.
 watch([() => form.productoId, () => form.categoriaId], () => {
   seleccion.value = []
 })
+
+// Al marcar una recolección se precargan sus kilos disponibles como asignación.
+watch(seleccion, (ids) => {
+  for (const id of ids) {
+    if (kilosAsignar[id] == null) {
+      const r = compatibles.value.find((x) => x.id === id)
+      if (r) kilosAsignar[id] = disponibleDe(r)
+    }
+  }
+})
+
+// Cada recolección marcada necesita unos kilos > 0 que no superen su disponible.
+const asignacionInvalida = computed(() =>
+  seleccion.value.some((id) => {
+    const r = compatibles.value.find((x) => x.id === id)
+    const kg = Number(kilosAsignar[id])
+    return !r || !(kg > 0) || kg > disponibleDe(r)
+  })
+)
 
 const saving = ref(false)
 const error = ref('')
@@ -69,7 +97,7 @@ async function submit() {
         rgseaa: form.rgseaa || undefined,
         ggn: form.ggn || undefined,
         origen: form.origen || undefined,
-        recoleccionIds: seleccion.value,
+        recolecciones: seleccion.value.map((id) => ({ recoleccionId: id, kilos: Number(kilosAsignar[id]) })),
       },
     })
     await router.push(`/dashboard/lotes/${l.id}`)
@@ -142,11 +170,26 @@ async function submit() {
           No hay recolecciones de ese producto y categoría.
         </p>
         <div v-else class="mt-2 flex flex-col gap-1">
-          <label v-for="r in compatibles" :key="r.id" class="label cursor-pointer justify-start gap-3">
+          <div v-for="r in compatibles" :key="r.id" class="flex flex-wrap items-center gap-3 py-1">
             <input v-model="seleccion" type="checkbox" :value="r.id" class="checkbox checkbox-sm" />
             <span class="font-mono text-sm">{{ r.codigoTrazabilidad }}</span>
-            <span class="text-xs opacity-60">{{ new Date(r.fechaRecoleccion).toLocaleDateString('es-ES') }}</span>
-          </label>
+            <span class="text-xs opacity-60">
+              {{ new Date(r.fechaRecoleccion).toLocaleDateString('es-ES') }} · {{ disponibleDe(r).toFixed(2) }} kg
+              disponibles
+            </span>
+            <label v-if="seleccion.includes(r.id)" class="ml-auto flex items-center gap-1 text-sm">
+              <input
+                v-model.number="kilosAsignar[r.id]"
+                type="number"
+                step="0.01"
+                min="0.01"
+                :max="disponibleDe(r)"
+                required
+                class="input input-bordered input-sm w-24"
+              />
+              kg
+            </label>
+          </div>
         </div>
       </div>
 
@@ -156,7 +199,7 @@ async function submit() {
       </div>
 
       <div class="flex gap-2">
-        <button type="submit" class="btn btn-primary" :disabled="saving || !seleccion.length">
+        <button type="submit" class="btn btn-primary" :disabled="saving || !seleccion.length || asignacionInvalida">
           <span v-if="saving" class="loading loading-spinner loading-sm" />
           Crear lote
         </button>

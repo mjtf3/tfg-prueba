@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { inArray } from 'drizzle-orm'
+import { inArray, sql } from 'drizzle-orm'
 import { db } from '../../database'
-import { lote, loteRecoleccion, recoleccion } from '../../database/schemas'
+import { lote, loteRecoleccion, recoleccion, pale } from '../../database/schemas'
 import { requireRole } from '../../utils/require-auth'
 import { esViolacionUnica } from '../../utils/db-errors'
 
@@ -13,11 +13,17 @@ const bodySchema = z.object({
   rgseaa: z.string().optional(),
   ggn: z.string().optional(),
   origen: z.string().optional(),
-  recoleccionIds: z
-    .array(z.number().int())
+  recolecciones: z
+    .array(
+      z.object({
+        recoleccionId: z.number().int(),
+        // Kilos de la recolección que se asignan a este lote.
+        kilos: z.number().positive('Los kilos asignados deben ser mayores que cero'),
+      })
+    )
     .min(1)
     // Sin duplicados: la PK compuesta de lote_recoleccion los rechazaría con un 500.
-    .refine((a) => new Set(a).size === a.length, 'IDs de recolección duplicados'),
+    .refine((a) => new Set(a.map((r) => r.recoleccionId)).size === a.length, 'IDs de recolección duplicados'),
 })
 
 /**
@@ -26,8 +32,9 @@ const bodySchema = z.object({
  * producto y categoría que el lote.
  *
  * La relación lote-recolección es N:M por diseño (RF-06): una misma recolección
- * puede repartirse entre varios lotes, por eso no se comprueba si ya pertenece a
- * otro lote.
+ * puede repartirse entre varios lotes. Para que ese reparto no infle el stock,
+ * cada vínculo lleva los kilos asignados y aquí se comprueba que, sumando lo ya
+ * asignado a otros lotes, no se supere lo cosechado (kilos de los palés).
  */
 export default defineEventHandler(async (event) => {
   await requireRole(event, 'oficina')
@@ -37,9 +44,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Datos del lote inválidos', data: parsed.error.flatten() })
   }
   const body = parsed.data
+  const ids = body.recolecciones.map((r) => r.recoleccionId)
 
-  const recs = await db.select().from(recoleccion).where(inArray(recoleccion.id, body.recoleccionIds))
-  if (recs.length !== body.recoleccionIds.length) {
+  const recs = await db.select().from(recoleccion).where(inArray(recoleccion.id, ids))
+  if (recs.length !== ids.length) {
     throw createError({ statusCode: 400, statusMessage: 'Alguna recolección indicada no existe' })
   }
   const incompatibles = recs.some((r) => r.productoId !== body.productoId || r.categoriaId !== body.categoriaId)
@@ -52,6 +60,41 @@ export default defineEventHandler(async (event) => {
 
   try {
     const creado = await db.transaction(async (tx) => {
+      // Bloquea las recolecciones implicadas: dos altas de lote simultáneas
+      // sobre la misma recolección quedan serializadas y no pueden asignarse
+      // ambas los mismos kilos.
+      await tx.select({ id: recoleccion.id }).from(recoleccion).where(inArray(recoleccion.id, ids)).for('update')
+
+      const cosechado = await tx
+        .select({
+          recoleccionId: pale.recoleccionId,
+          total: sql<string>`coalesce(sum(${pale.kilos}), 0)`,
+        })
+        .from(pale)
+        .where(inArray(pale.recoleccionId, ids))
+        .groupBy(pale.recoleccionId)
+      const asignado = await tx
+        .select({
+          recoleccionId: loteRecoleccion.recoleccionId,
+          total: sql<string>`coalesce(sum(${loteRecoleccion.kilos}), 0)`,
+        })
+        .from(loteRecoleccion)
+        .where(inArray(loteRecoleccion.recoleccionId, ids))
+        .groupBy(loteRecoleccion.recoleccionId)
+
+      const cosechadoPorRec = new Map(cosechado.map((r) => [r.recoleccionId, Number(r.total)]))
+      const asignadoPorRec = new Map(asignado.map((r) => [r.recoleccionId, Number(r.total)]))
+      for (const r of body.recolecciones) {
+        const disponible = (cosechadoPorRec.get(r.recoleccionId) ?? 0) - (asignadoPorRec.get(r.recoleccionId) ?? 0)
+        if (r.kilos > disponible) {
+          const codigo = recs.find((x) => x.id === r.recoleccionId)!.codigoTrazabilidad
+          throw createError({
+            statusCode: 400,
+            statusMessage: `La recolección ${codigo} solo tiene ${disponible.toFixed(2)} kg sin asignar a otros lotes`,
+          })
+        }
+      }
+
       const [l] = await tx
         .insert(lote)
         .values({
@@ -64,7 +107,13 @@ export default defineEventHandler(async (event) => {
           origen: body.origen,
         })
         .returning()
-      await tx.insert(loteRecoleccion).values(body.recoleccionIds.map((id) => ({ loteId: l.id, recoleccionId: id })))
+      await tx.insert(loteRecoleccion).values(
+        body.recolecciones.map((r) => ({
+          loteId: l.id,
+          recoleccionId: r.recoleccionId,
+          kilos: String(r.kilos),
+        }))
+      )
       return l
     })
 

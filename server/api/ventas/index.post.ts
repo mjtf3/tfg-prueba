@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { eq, sql } from 'drizzle-orm'
+import { and, eq, isNull, sql } from 'drizzle-orm'
 import { db } from '../../database'
-import { venta, lote, loteRecoleccion, pale } from '../../database/schemas'
+import { venta, lote, loteRecoleccion } from '../../database/schemas'
 import { requireRole } from '../../utils/require-auth'
 
 const bodySchema = z.object({
@@ -9,8 +9,9 @@ const bodySchema = z.object({
   fechaVenta: z.iso.date('Fecha de venta inválida (formato esperado YYYY-MM-DD)'),
   kilos: z.number().positive(),
   precioVenta: z.number().nonnegative(),
-  // Destino de la mercancía, para la trazabilidad hacia delante (art. 18 Reglamento CE 178/2002).
-  cliente: z.string().optional(),
+  // Destino de la mercancía, obligatorio: sin destinatario no hay trazabilidad
+  // hacia delante (art. 18 Reglamento CE 178/2002).
+  cliente: z.string().trim().min(1, 'El cliente/destino es obligatorio'),
 })
 
 /**
@@ -27,43 +28,47 @@ export default defineEventHandler(async (event) => {
   }
   const body = parsed.data
 
-  const [existeLote] = await db.select({ id: lote.id }).from(lote).where(eq(lote.id, body.loteId)).limit(1)
-  if (!existeLote) {
-    throw createError({ statusCode: 400, statusMessage: 'El lote indicado no existe' })
-  }
+  const creada = await db.transaction(async (tx) => {
+    // Bloquea el lote: la comprobación de kilos disponibles y el insert quedan
+    // serializados frente a otras ventas simultáneas del mismo lote, evitando
+    // que dos peticiones vean el mismo disponible y ambas vendan.
+    const [existeLote] = await tx.select({ id: lote.id }).from(lote).where(eq(lote.id, body.loteId)).for('update')
+    if (!existeLote) {
+      throw createError({ statusCode: 400, statusMessage: 'El lote indicado no existe' })
+    }
 
-  // Kilos disponibles del lote: suma de los palés de sus recolecciones menos lo
-  // ya vendido. Es solo una cota de sanidad, no un balance exacto: si una misma
-  // recolección se reparte entre varios lotes, sus kilos se contarían en ambos.
-  const [[{ totalPales }], [{ totalVentas }]] = await Promise.all([
-    db
-      .select({ totalPales: sql<string>`coalesce(sum(${pale.kilos}), 0)` })
+    // Kilos disponibles del lote: los asignados desde sus recolecciones
+    // (`lote_recoleccion.kilos`) menos lo ya vendido sin anular. Como la
+    // asignación por lote es excluyente, una recolección repartida entre
+    // varios lotes no puede respaldar ventas duplicadas.
+    const [{ asignado }] = await tx
+      .select({ asignado: sql<string>`coalesce(sum(${loteRecoleccion.kilos}), 0)` })
       .from(loteRecoleccion)
-      .innerJoin(pale, eq(pale.recoleccionId, loteRecoleccion.recoleccionId))
-      .where(eq(loteRecoleccion.loteId, body.loteId)),
-    db
-      .select({ totalVentas: sql<string>`coalesce(sum(${venta.kilos}), 0)` })
+      .where(eq(loteRecoleccion.loteId, body.loteId))
+    const [{ vendido }] = await tx
+      .select({ vendido: sql<string>`coalesce(sum(${venta.kilos}), 0)` })
       .from(venta)
-      .where(eq(venta.loteId, body.loteId)),
-  ])
-  const disponible = Number(totalPales) - Number(totalVentas)
-  if (body.kilos > disponible) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: `La venta supera los kilos disponibles del lote (quedan ${disponible.toFixed(2)} kg)`,
-    })
-  }
+      .where(and(eq(venta.loteId, body.loteId), isNull(venta.anuladaAt)))
+    const disponible = Number(asignado) - Number(vendido)
+    if (body.kilos > disponible) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `La venta supera los kilos disponibles del lote (quedan ${disponible.toFixed(2)} kg)`,
+      })
+    }
 
-  const [creada] = await db
-    .insert(venta)
-    .values({
-      loteId: body.loteId,
-      fechaVenta: body.fechaVenta,
-      kilos: String(body.kilos),
-      precioVenta: String(body.precioVenta),
-      cliente: body.cliente,
-    })
-    .returning()
+    const [v] = await tx
+      .insert(venta)
+      .values({
+        loteId: body.loteId,
+        fechaVenta: body.fechaVenta,
+        kilos: String(body.kilos),
+        precioVenta: String(body.precioVenta),
+        cliente: body.cliente,
+      })
+      .returning()
+    return v
+  })
 
   setResponseStatus(event, 201)
   return creada
