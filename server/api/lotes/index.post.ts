@@ -1,18 +1,18 @@
 import { z } from 'zod'
-import { inArray, sql } from 'drizzle-orm'
+import { eq, inArray, sql } from 'drizzle-orm'
 import { db } from '../../database'
-import { lote, loteRecoleccion, recoleccion, pale } from '../../database/schemas'
+import { lote, loteRecoleccion, recoleccion, pale, parcela, pueblo } from '../../database/schemas'
 import { requireRole } from '../../utils/require-auth'
 import { esViolacionUnica } from '../../utils/db-errors'
+import env from '../../utils/env'
 
 const bodySchema = z.object({
-  codigo: z.string().min(1),
   productoId: z.number().int(),
   categoriaId: z.number().int(),
-  numPiezas: z.number().int().min(0).optional(),
+  // RGSEAA y GGN son fijos de la empresa (defaults EMPRESA_*); solo llegan aquí
+  // si se sobreescriben manualmente al dar de alta el lote.
   rgseaa: z.string().optional(),
   ggn: z.string().optional(),
-  origen: z.string().optional(),
   recolecciones: z
     .array(
       z.object({
@@ -65,6 +65,27 @@ export default defineEventHandler(async (event) => {
       // ambas los mismos kilos.
       await tx.select({ id: recoleccion.id }).from(recoleccion).where(inArray(recoleccion.id, ids)).for('update')
 
+      // Nº de lote autogenerado: contador secuencial interno (p. ej. 0700018),
+      // sin estructura semántica. El lock de aviso serializa la generación para
+      // que dos altas concurrentes no calculen el mismo código.
+      await tx.execute(sql`select pg_advisory_xact_lock(4771001)`)
+      const [maxFila] = await tx
+        .select({ maxCod: sql<string>`coalesce(max(cast(${lote.codigo} as integer)), 700017)` })
+        .from(lote)
+        .where(sql`${lote.codigo} ~ '^[0-9]+$'`)
+      const codigo = String(Number(maxFila?.maxCod ?? '700017') + 1).padStart(7, '0')
+
+      // Origen derivado: pueblos distintos de las recolecciones que componen el
+      // lote. No se teclea, para que quede respaldado por la trazabilidad. Las
+      // recolecciones compradas (sin parcela) no aportan pueblo.
+      const pueblosOrigen = await tx
+        .selectDistinct({ nombre: pueblo.nombre })
+        .from(recoleccion)
+        .innerJoin(parcela, eq(recoleccion.parcelaId, parcela.id))
+        .innerJoin(pueblo, eq(parcela.puebloId, pueblo.id))
+        .where(inArray(recoleccion.id, ids))
+      const origen = pueblosOrigen.map((p) => p.nombre).join(', ') || null
+
       const cosechado = await tx
         .select({
           recoleccionId: pale.recoleccionId,
@@ -98,13 +119,12 @@ export default defineEventHandler(async (event) => {
       const [l] = await tx
         .insert(lote)
         .values({
-          codigo: body.codigo,
+          codigo,
           productoId: body.productoId,
           categoriaId: body.categoriaId,
-          numPiezas: body.numPiezas,
-          rgseaa: body.rgseaa,
-          ggn: body.ggn,
-          origen: body.origen,
+          rgseaa: body.rgseaa ?? env.EMPRESA_RGSEAA ?? null,
+          ggn: body.ggn ?? env.EMPRESA_GGN ?? null,
+          origen,
         })
         .returning()
       await tx.insert(loteRecoleccion).values(
@@ -120,10 +140,10 @@ export default defineEventHandler(async (event) => {
     setResponseStatus(event, 201)
     return creado
   } catch (e) {
-    // La unicidad de `codigo` la garantiza la BD; traducimos su error a un 400
-    // legible (cubre también la carrera entre peticiones concurrentes).
+    // El código se genera bajo un lock de aviso, así que un choque de unicidad
+    // solo puede venir de datos preexistentes con el mismo número: pedimos reintento.
     if (esViolacionUnica(e)) {
-      throw createError({ statusCode: 400, statusMessage: `Ya existe un lote con el código ${body.codigo}` })
+      throw createError({ statusCode: 409, statusMessage: 'No se pudo generar un número de lote único; inténtalo de nuevo' })
     }
     throw e
   }

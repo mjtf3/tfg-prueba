@@ -14,7 +14,6 @@ export default defineEventHandler(async (event) => {
       codigo: lote.codigo,
       productoId: lote.productoId,
       categoriaId: lote.categoriaId,
-      numPiezas: lote.numPiezas,
       rgseaa: lote.rgseaa,
       ggn: lote.ggn,
       origen: lote.origen,

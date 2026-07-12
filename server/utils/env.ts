@@ -15,6 +15,11 @@ const EnvSchema = z.object({
   DATABASE_URL: z.string().nonempty(),
   BETTER_AUTH_SECRET: z.string().nonempty(),
   BETTER_AUTH_URL: z.string().nonempty(),
+  // Datos regulatorios fijos de la empresa para la etiqueta externa de los
+  // lotes (RGSEAA sanitario y GGN de GlobalG.A.P.). Opcionales: si no están,
+  // el lote se crea sin ellos y pueden indicarse manualmente al darlo de alta.
+  EMPRESA_RGSEAA: z.string().optional(),
+  EMPRESA_GGN: z.string().optional(),
 })
 
 export type EnvSchema = z.infer<typeof EnvSchema>

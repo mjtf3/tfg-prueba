@@ -83,10 +83,6 @@ function fmtFecha(f: string) {
         <div class="text-xs opacity-60">Categoría</div>
         {{ lote.categoria?.nombre }}
       </div>
-      <div v-if="lote.numPiezas != null">
-        <div class="text-xs opacity-60">Nº piezas</div>
-        {{ lote.numPiezas }}
-      </div>
       <div v-if="lote.rgseaa">
         <div class="text-xs opacity-60">RGSEAA</div>
         {{ lote.rgseaa }}

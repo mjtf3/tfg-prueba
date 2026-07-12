@@ -195,7 +195,11 @@ export const lote = pgTable(
     categoriaId: integer('categoria_id')
       .notNull()
       .references(() => categoria.id),
-    numPiezas: integer('num_piezas'),
+    // Datos regulatorios de la etiqueta externa. RGSEAA (registro sanitario) y
+    // GGN (GlobalG.A.P.) son fijos de la empresa/productor: se rellenan con los
+    // valores por defecto (EMPRESA_RGSEAA / EMPRESA_GGN) salvo excepción. El
+    // origen se deriva de los pueblos de las recolecciones que componen el lote,
+    // no se teclea, para que quede respaldado por la cadena de trazabilidad.
     rgseaa: text('rgseaa'),
     ggn: text('ggn'),
     origen: text('origen'),

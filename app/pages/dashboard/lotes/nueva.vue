@@ -13,6 +13,7 @@ interface RecolItem {
   fechaRecoleccion: string
   totalKilos: number
   kilosAsignados: number
+  pueblo: string | null
 }
 
 const router = useRouter()
@@ -20,15 +21,15 @@ const router = useRouter()
 const { data: productos } = await useFetch<Catalogo[]>('/api/catalogos/productos')
 const { data: categorias } = await useFetch<Catalogo[]>('/api/catalogos/categorias')
 const { data: recolecciones } = await useFetch<RecolItem[]>('/api/recolecciones')
+// Datos regulatorios fijos de la empresa: prerrellenan la etiqueta externa.
+const { data: empresa } = await useFetch<{ rgseaa: string; ggn: string }>('/api/config/empresa')
 
 const form = reactive({
-  codigo: '',
   productoId: null as number | null,
   categoriaId: null as number | null,
-  numPiezas: null as number | null,
-  rgseaa: '',
-  ggn: '',
-  origen: '',
+  // Prerrellenados con los valores de empresa; editables solo por excepción.
+  rgseaa: empresa.value?.rgseaa ?? '',
+  ggn: empresa.value?.ggn ?? '',
 })
 
 const seleccion = ref<number[]>([])
@@ -72,16 +73,18 @@ const asignacionInvalida = computed(() =>
   })
 )
 
+// Origen derivado de las recolecciones marcadas: pueblos distintos de origen.
+// Es solo previsualización; el valor autoritativo lo calcula el servidor al crear
+// el lote. Las compras foráneas no tienen pueblo y no aportan origen.
+const origenDerivado = computed(() => {
+  const pueblos = seleccion.value
+    .map((id) => compatibles.value.find((x) => x.id === id)?.pueblo)
+    .filter((n): n is string => !!n)
+  return [...new Set(pueblos)].join(', ')
+})
+
 const saving = ref(false)
 const error = ref('')
-
-// Con `v-model.number`, si el usuario escribe y borra el campo queda como `''`,
-// que zod `.optional()` no acepta: lo normalizamos a `undefined`.
-function numOrUndefined(v: unknown): number | undefined {
-  if (v === null || v === undefined || v === '') return undefined
-  const n = Number(v)
-  return Number.isNaN(n) ? undefined : n
-}
 
 async function submit() {
   error.value = ''
@@ -90,13 +93,10 @@ async function submit() {
     const l = await $fetch<{ id: number }>('/api/lotes', {
       method: 'POST',
       body: {
-        codigo: form.codigo,
         productoId: form.productoId,
         categoriaId: form.categoriaId,
-        numPiezas: numOrUndefined(form.numPiezas),
         rgseaa: form.rgseaa || undefined,
         ggn: form.ggn || undefined,
-        origen: form.origen || undefined,
         recolecciones: seleccion.value.map((id) => ({ recoleccionId: id, kilos: Number(kilosAsignar[id]) })),
       },
     })
@@ -114,17 +114,9 @@ async function submit() {
     <h1 class="text-2xl font-bold mb-4">Nuevo lote</h1>
 
     <form class="flex flex-col gap-4" @submit.prevent="submit">
+      <p class="text-sm opacity-70">El nº de lote se asigna automáticamente al crearlo.</p>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <label class="form-control">
-          <span class="label-text">Nº de lote</span>
-          <input
-            v-model="form.codigo"
-            type="text"
-            required
-            class="input input-bordered w-full"
-            placeholder="p. ej. 0700018"
-          />
-        </label>
         <label class="form-control">
           <span class="label-text">Producto</span>
           <select v-model.number="form.productoId" required class="select select-bordered w-full">
@@ -141,23 +133,27 @@ async function submit() {
         </label>
       </div>
 
-      <fieldset class="grid grid-cols-2 sm:grid-cols-4 gap-4 border border-base-300 rounded-box p-4">
-        <legend class="px-2 text-sm font-semibold">Etiqueta externa (opcional)</legend>
-        <label class="form-control">
-          <span class="label-text">Nº piezas</span>
-          <input v-model.number="form.numPiezas" type="number" min="0" class="input input-bordered w-full" />
-        </label>
+      <fieldset class="grid grid-cols-1 sm:grid-cols-3 gap-4 border border-base-300 rounded-box p-4">
+        <legend class="px-2 text-sm font-semibold">Etiqueta externa</legend>
         <label class="form-control">
           <span class="label-text">RGSEAA</span>
           <input v-model="form.rgseaa" type="text" class="input input-bordered w-full" />
+          <span class="label-text-alt opacity-60">Valor de empresa; edítalo solo por excepción.</span>
         </label>
         <label class="form-control">
           <span class="label-text">GGN</span>
           <input v-model="form.ggn" type="text" class="input input-bordered w-full" />
+          <span class="label-text-alt opacity-60">Valor de empresa; edítalo solo por excepción.</span>
         </label>
         <label class="form-control">
           <span class="label-text">Origen</span>
-          <input v-model="form.origen" type="text" class="input input-bordered w-full" />
+          <input
+            :value="origenDerivado || '—'"
+            type="text"
+            readonly
+            class="input input-bordered w-full bg-base-200"
+          />
+          <span class="label-text-alt opacity-60">Derivado de las recolecciones seleccionadas.</span>
         </label>
       </fieldset>
 
