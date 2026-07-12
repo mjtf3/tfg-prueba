@@ -4,6 +4,22 @@ import { inferAdditionalFields } from 'better-auth/client/plugins'
 import type { InferSessionFromClient, InferUserFromClient, BetterAuthClientOptions } from 'better-auth/client'
 import type { RouteLocationRaw } from 'vue-router'
 
+type SessionData =
+  | {
+      session: InferSessionFromClient<BetterAuthClientOptions>
+      user: InferUserFromClient<BetterAuthClientOptions>
+    }
+  | null
+  | undefined
+
+// Variable a nivel de módulo (no dentro de useAuth) para que TODAS las llamadas a fetchSession
+// en el cliente compartan la misma petición en curso: si ya hay un fetch en vuelo, quien llega
+// después espera su resultado en vez de recibir la sesión aún vacía (evita la condición de
+// carrera con el listener de $sessionSignal y el middleware de auth tras el login).
+// Solo se usa en cliente: en servidor una variable de módulo sería común a peticiones
+// concurrentes de usuarios distintos dentro del mismo proceso Nitro.
+let sessionPromise: Promise<SessionData> | null = null
+
 export function useAuth() {
   const url = useRequestURL()
   const headers = import.meta.server ? useRequestHeaders() : undefined
@@ -20,24 +36,31 @@ export function useAuth() {
   const options = { redirectUserTo: '/dashboard', redirectGuestTo: '/login' }
   const session = useState<InferSessionFromClient<BetterAuthClientOptions> | null>('auth:session', () => null)
   const user = useState<InferUserFromClient<BetterAuthClientOptions> | null>('auth:user', () => null)
-  const sessionFetching = import.meta.server ? ref(false) : useState('auth:sessionFetching', () => false)
 
-  const fetchSession = async () => {
-    console.debug('fetching session...')
-    if (sessionFetching.value) {
-      console.debug('already fetching session')
-      return
+  const fetchSession = () => {
+    const consultar = async (): Promise<SessionData> => {
+      const { data } = await client.getSession({
+        fetchOptions: {
+          headers,
+        },
+      })
+      session.value = data?.session || null
+      user.value = data?.user || null
+      return data
     }
-    sessionFetching.value = true
-    const { data } = await client.getSession({
-      fetchOptions: {
-        headers,
-      },
-    })
-    session.value = data?.session || null
-    user.value = data?.user || null
-    sessionFetching.value = false
-    return data
+
+    // En servidor no se comparte la promesa: cada petición hace su propio fetch.
+    if (import.meta.server) return consultar()
+
+    // Si ya hay una petición en vuelo, se devuelve la misma promesa en lugar de lanzar otra:
+    // así los que llegan tarde esperan el resultado real en vez de saltárselo. Se limpia
+    // siempre (también en error) para no dejar el estado de auth congelado.
+    if (!sessionPromise) {
+      sessionPromise = consultar().finally(() => {
+        sessionPromise = null
+      })
+    }
+    return sessionPromise
   }
 
   if (import.meta.client) {

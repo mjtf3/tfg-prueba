@@ -3,7 +3,7 @@ definePageMeta({
   auth: { only: 'guest' },
 })
 
-const { signIn, options } = useAuth()
+const { signIn, fetchSession, options } = useAuth()
 const deshabilitado = ref(false)
 const email = ref('')
 const contrasena = ref('')
@@ -13,10 +13,10 @@ async function handleLoginEmail() {
   errorLogin.value = ''
   deshabilitado.value = true
 
+  // Sin callbackURL: se evita el doble redirect (hard redirect de better-auth + navigateTo).
   const { error } = await signIn.email({
     email: email.value,
     password: contrasena.value,
-    callbackURL: options.redirectUserTo,
   })
 
   if (error) {
@@ -25,6 +25,8 @@ async function handleLoginEmail() {
     return
   }
 
+  // Se espera a que la sesión esté cargada antes de navegar, para que el middleware la vea ya lista.
+  await fetchSession()
   await navigateTo(options.redirectUserTo)
 }
 </script>

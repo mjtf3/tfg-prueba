@@ -57,7 +57,14 @@ export default defineEventHandler(async (event) => {
     },
     lotes: r.lotes.map((lr) => ({
       codigo: lr.lote.codigo,
-      ventas: lr.lote.ventas.map((v) => ({ fechaVenta: v.fechaVenta, kilos: v.kilos })),
+      // El cliente es el destino de la mercancía (trazabilidad hacia delante,
+      // art. 18 CE 178/2002), no un dato económico: se incluye para ambos roles.
+      ventas: lr.lote.ventas.map((v) => ({
+        fechaVenta: v.fechaVenta,
+        kilos: v.kilos,
+        cliente: v.cliente,
+        anulada: v.anuladaAt != null,
+      })),
     })),
   }
 })

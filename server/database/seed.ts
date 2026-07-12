@@ -59,9 +59,7 @@ async function seedCatalogos() {
 
     await tx.insert(finca).values([{ nombre: 'CANARIO' }, { nombre: 'EL PRADO' }])
 
-    await tx
-      .insert(producto)
-      .values([{ nombre: 'COLIFLOR MORADA' }, { nombre: 'BRÓCOLI' }, { nombre: 'ALCACHOFA' }])
+    await tx.insert(producto).values([{ nombre: 'COLIFLOR MORADA' }, { nombre: 'BRÓCOLI' }, { nombre: 'ALCACHOFA' }])
 
     await tx.insert(categoria).values([{ nombre: 'CAT I' }, { nombre: 'CAT II' }])
 

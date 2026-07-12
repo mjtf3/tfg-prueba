@@ -11,6 +11,7 @@ import {
   index,
   unique,
 } from 'drizzle-orm/pg-core'
+import { user } from './auth-schema'
 
 /**
  * Esquema de la cadena de trazabilidad hortofrutícola (Agropaco S.L.).
@@ -55,10 +56,7 @@ export const parcela = pgTable(
       .notNull()
       .references(() => pueblo.id),
   },
-  (t) => [
-    index('parcela_pueblo_idx').on(t.puebloId),
-    unique('parcela_codigo_pueblo_uq').on(t.codigo, t.puebloId),
-  ]
+  (t) => [index('parcela_pueblo_idx').on(t.puebloId), unique('parcela_codigo_pueblo_uq').on(t.codigo, t.puebloId)]
 )
 
 /**
@@ -75,10 +73,7 @@ export const recinto = pgTable(
       .notNull()
       .references(() => parcela.id),
   },
-  (t) => [
-    index('recinto_parcela_idx').on(t.parcelaId),
-    unique('recinto_codigo_parcela_uq').on(t.codigo, t.parcelaId),
-  ]
+  (t) => [index('recinto_parcela_idx').on(t.parcelaId), unique('recinto_codigo_parcela_uq').on(t.codigo, t.parcelaId)]
 )
 
 /** Finca / huerto de origen (texto de la etiqueta interna, p. ej. CANARIO). */
@@ -213,7 +208,13 @@ export const lote = pgTable(
   (t) => [index('lote_producto_idx').on(t.productoId)]
 )
 
-/** Tabla puente N:M entre lote y recolección. */
+/**
+ * Tabla puente N:M entre lote y recolección. `kilos` reparte la recolección
+ * entre lotes: son los kilos de esa recolección asignados a este lote. La suma
+ * de asignaciones de una recolección no puede superar los kilos de sus palés
+ * (se valida al crear el lote); así una misma recolección repartida entre
+ * varios lotes no respalda ventas por encima de lo cosechado.
+ */
 export const loteRecoleccion = pgTable(
   'lote_recoleccion',
   {
@@ -223,6 +224,9 @@ export const loteRecoleccion = pgTable(
     recoleccionId: integer('recoleccion_id')
       .notNull()
       .references(() => recoleccion.id, { onDelete: 'restrict' }),
+    // El default '0' existe solo para las filas anteriores a la columna; el
+    // alta de lote siempre indica los kilos asignados.
+    kilos: numeric('kilos', { precision: 10, scale: 2 }).notNull().default('0'),
   },
   (t) => [primaryKey({ columns: [t.loteId, t.recoleccionId] })]
 )
@@ -275,12 +279,21 @@ export const venta = pgTable(
     fechaVenta: date('fecha_venta').notNull(),
     kilos: numeric('kilos', { precision: 10, scale: 2 }).notNull(),
     precioVenta: numeric('precio_venta', { precision: 12, scale: 2 }).notNull(),
+    // Destino de la mercancía, obligatorio: sin destinatario no hay
+    // trazabilidad hacia delante (art. 18 Reglamento CE 178/2002).
+    cliente: text('cliente').notNull(),
     // Importe de la operación, generado por PostgreSQL a partir de kilos y precio
     // de venta (RF-11). Al ser una columna generada no puede desincronizarse ni
     // insertarse manualmente.
     total: numeric('total', { precision: 14, scale: 2 })
       .notNull()
       .generatedAlwaysAs(sql`kilos * precio_venta`),
+    // Anulación (borrado lógico). Una venta anulada deja de contar para el
+    // stock del lote pero se conserva como histórico auditable: quién la
+    // anuló, cuándo y por qué. No hay borrado físico de ventas.
+    anuladaAt: timestamp('anulada_at'),
+    anuladaPor: text('anulada_por').references(() => user.id),
+    motivoAnulacion: text('motivo_anulacion'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (t) => [index('venta_lote_idx').on(t.loteId)]

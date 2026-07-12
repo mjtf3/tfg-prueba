@@ -1,7 +1,7 @@
 <script setup lang="ts">
 definePageMeta({ middleware: 'oficina' })
 
-const { data: usuarios, refresh } = await useFetch('/api/usuarios')
+const { data: usuarios, pending: pendingUsuarios, error: errorUsuarios, refresh } = await useFetch('/api/usuarios')
 const { user: usuarioActual } = useAuth()
 
 const form = reactive({
@@ -73,8 +73,12 @@ async function submit() {
           </select>
         </label>
 
-        <div v-if="error" class="alert alert-error"><Icon name="tabler:alert-triangle" /><span>{{ error }}</span></div>
-        <div v-if="ok" class="alert alert-success"><Icon name="tabler:check" /><span>{{ ok }}</span></div>
+        <div v-if="error" class="alert alert-error">
+          <Icon name="tabler:alert-triangle" /><span>{{ error }}</span>
+        </div>
+        <div v-if="ok" class="alert alert-success">
+          <Icon name="tabler:check" /><span>{{ ok }}</span>
+        </div>
 
         <button type="submit" class="btn btn-primary" :disabled="saving">
           <span v-if="saving" class="loading loading-spinner loading-sm" />
@@ -86,11 +90,23 @@ async function submit() {
     <!-- Listado -->
     <div class="lg:col-span-2">
       <h2 class="text-lg font-semibold mb-2">Usuarios</h2>
-      <div v-if="!usuarios?.length" class="alert"><Icon name="tabler:info-circle" /><span>No hay usuarios.</span></div>
+      <div v-if="pendingUsuarios" class="flex justify-center p-8"><span class="loading loading-spinner" /></div>
+      <div v-else-if="errorUsuarios" class="alert alert-error">
+        <Icon name="tabler:alert-triangle" />
+        <span>No se pudieron cargar los usuarios. Inténtalo de nuevo.</span>
+      </div>
+      <div v-else-if="!usuarios?.length" class="alert">
+        <Icon name="tabler:info-circle" /><span>No hay usuarios.</span>
+      </div>
       <div v-else class="overflow-x-auto">
         <table class="table table-zebra">
           <thead>
-            <tr><th>Nombre</th><th>Correo</th><th>Rol</th><th></th></tr>
+            <tr>
+              <th>Nombre</th>
+              <th>Correo</th>
+              <th>Rol</th>
+              <th></th>
+            </tr>
           </thead>
           <tbody>
             <tr v-for="u in usuarios" :key="u.id" class="hover">
@@ -100,11 +116,7 @@ async function submit() {
                 <span class="badge" :class="u.role === 'oficina' ? 'badge-primary' : 'badge-ghost'">{{ u.role }}</span>
               </td>
               <td class="text-right">
-                <button
-                  v-if="u.id !== usuarioActual?.id"
-                  class="btn btn-ghost btn-xs text-error"
-                  @click="eliminar(u)"
-                >
+                <button v-if="u.id !== usuarioActual?.id" class="btn btn-ghost btn-xs text-error" @click="eliminar(u)">
                   <Icon name="tabler:trash" /> Eliminar
                 </button>
                 <span v-else class="text-xs opacity-50">(tú)</span>
