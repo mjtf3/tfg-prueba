@@ -59,6 +59,21 @@ async function eliminarCaja(c: { id: number; codigo?: string | null }) {
 function fmtFecha(f: string) {
   return new Date(f).toLocaleDateString('es-ES')
 }
+
+// Origen legible de una recolección para la traza hacia atrás: ubicación en
+// cosecha propia, o proveedor en compra foránea.
+function origenDe(r: any): string {
+  if (r?.tipo === 'comprado') {
+    return r?.proveedor?.nombre ? 'Comprado · ' + r.proveedor.nombre : 'Comprado (foráneo)'
+  }
+  const partes = [
+    r?.parcela?.pueblo?.nombre,
+    r?.parcela?.nombre ?? r?.parcela?.codigo,
+    r?.recinto?.codigo,
+    r?.finca?.nombre,
+  ].filter(Boolean)
+  return partes.length ? partes.join(' / ') : 'Origen propio'
+}
 </script>
 
 <template>
@@ -97,12 +112,32 @@ function fmtFecha(f: string) {
       </div>
     </div>
 
-    <!-- Recolecciones agrupadas -->
-    <h2 class="text-lg font-semibold mb-2">Recolecciones ({{ lote.recolecciones.length }})</h2>
-    <div class="flex flex-wrap gap-2 mb-6">
-      <span v-for="lr in lote.recolecciones" :key="lr.recoleccionId" class="badge badge-outline font-mono">
-        {{ lr.recoleccion?.codigoTrazabilidad }} · {{ lr.kilos }} kg
-      </span>
+    <!-- Trazabilidad hacia atrás: origen de cada recolección que compone el lote -->
+    <h2 class="text-lg font-semibold mb-2">Trazabilidad · recolecciones ({{ lote.recolecciones.length }})</h2>
+    <div class="flex flex-col gap-3 mb-6">
+      <div v-for="lr in lote.recolecciones" :key="lr.recoleccionId" class="border border-base-300 rounded-box p-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-mono font-semibold">{{ lr.recoleccion?.codigoTrazabilidad }}</span>
+          <span
+            class="badge badge-sm"
+            :class="lr.recoleccion?.tipo === 'comprado' ? 'badge-warning' : 'badge-success'"
+          >
+            {{ lr.recoleccion?.tipo === 'comprado' ? 'Comprado' : 'Propio' }}
+          </span>
+          <span class="text-sm opacity-70">{{ lr.kilos }} kg en este lote</span>
+        </div>
+        <div class="text-sm mt-1"><span class="opacity-60">Origen:</span> {{ origenDe(lr.recoleccion) }}</div>
+        <div v-if="lr.recoleccion?.pales?.length" class="flex flex-wrap gap-1 mt-2">
+          <span
+            v-for="p in lr.recoleccion.pales"
+            :key="p.id"
+            class="badge badge-outline badge-sm font-mono"
+            :title="`${p.numCajas} cajas · ${p.kilos} kg`"
+          >
+            {{ p.qr }}
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- Ventas -->

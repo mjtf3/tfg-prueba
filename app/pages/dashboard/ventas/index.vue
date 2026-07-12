@@ -15,6 +15,7 @@ interface VentaItem {
   cliente: string
   anuladaAt: string | null
   motivoAnulacion: string | null
+  loteId: number
   lote?: { codigo: string; producto?: { nombre: string | null } }
 }
 
@@ -191,13 +192,28 @@ async function anular(id: number) {
           <tbody>
             <tr v-for="v in ventas" :key="v.id" class="hover" :class="{ 'opacity-50': v.anuladaAt }">
               <td>{{ fmtFecha(v.fechaVenta) }}</td>
-              <td class="font-mono">{{ v.lote?.codigo }}</td>
+              <td class="font-mono">
+                <NuxtLink
+                  :to="`/dashboard/lotes/${v.loteId}`"
+                  class="link link-hover"
+                  title="Ver trazabilidad del lote"
+                >
+                  {{ v.lote?.codigo }}
+                </NuxtLink>
+              </td>
               <td>{{ v.lote?.producto?.nombre }}</td>
               <td>{{ v.cliente || '—' }}</td>
               <td class="text-right">{{ v.kilos }}</td>
               <td class="text-right">{{ v.precioVenta }}</td>
               <td class="text-right font-semibold">{{ v.total }}</td>
               <td class="text-right">
+                <NuxtLink
+                  :to="`/dashboard/lotes/${v.loteId}`"
+                  class="btn btn-ghost btn-xs"
+                  title="Ver trazabilidad"
+                >
+                  <Icon name="tabler:route" />
+                </NuxtLink>
                 <span v-if="v.anuladaAt" class="badge badge-ghost" :title="v.motivoAnulacion || undefined">
                   Anulada
                 </span>

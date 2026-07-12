@@ -15,7 +15,21 @@ export default defineEventHandler(async (event) => {
     with: {
       producto: true,
       categoria: true,
-      recolecciones: { with: { recoleccion: true } },
+      // Trazabilidad hacia atrás (RF-12): cada recolección con su origen y palés,
+      // para reconstruir desde el lote/venta hasta la procedencia.
+      recolecciones: {
+        with: {
+          recoleccion: {
+            with: {
+              parcela: { with: { pueblo: true } },
+              recinto: true,
+              finca: true,
+              proveedor: true,
+              pales: true,
+            },
+          },
+        },
+      },
       cajas: { with: { recolecciones: true } },
       ventas: true,
     },
